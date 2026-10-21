@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Disociación de ácidos y bases</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1520; --panel:#101F30; --panel-line:#22374B;
+    --ink:#EAF2F5; --ink-dim:#93A6B8; --water:#153349;
+    --cation:#F2A65A; --anion:#5FC9C0; --accent:#E8593A;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  h1,h2,.eq{font-family:'Literata',Georgia,serif;}
+
+  #pixelBg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    display:none; background:#0B1520;
+  }
+  body.pixel #pixelBg{ display:block; }
+  #pixelCanvas{ position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; }
+  body.pixel .wrap{ position:relative; z-index:2; background:transparent; }
+  body.pixel .panel{ background:rgba(16,31,48,.82); }
+
+  /* ============================================================
+     Overlays / pantallas
+     ============================================================ */
+  .overlay{
+    position:fixed; inset:0; z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    background:#0B1520;
+    padding:24px;
+  }
+  .overlay.hidden{ display:none; }
+  .overlay-card{
+    max-width:560px; width:100%; text-align:left;
+    background:var(--panel); border:1px solid var(--panel-line);
+    border-radius:4px; padding:32px 30px;
+  }
+  .overlay-card h2{
+    font-size:1.35rem; margin:0 0 10px; font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .overlay-card p{ color:var(--ink-dim); font-size:.88rem; margin:0 0 24px; line-height:1.55; }
+  .overlay-label{
+    display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-dim); margin-bottom:10px; font-weight:600;
+  }
+  .choice-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:520px){ .choice-row{grid-template-columns:1fr;} }
+  .choice-btn{
+    background:var(--bg); color:var(--ink);
+    border:1px solid var(--panel-line); border-radius:3px;
+    padding:16px 18px; cursor:pointer; text-align:left;
+    font-family:inherit; transition:border-color .15s;
+  }
+  .choice-btn:hover{ border-color:var(--accent); }
+  .choice-btn b{ display:block; font-size:.95rem; margin-bottom:4px; font-family:'Literata',serif; font-weight:600; }
+  .choice-btn span{ font-size:.76rem; color:var(--ink-dim); line-height:1.4; }
+
+  /* Selector de temas */
+  .topics-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:6px; }
+  @media (max-width:640px){ .topics-grid{grid-template-columns:1fr;} }
+  .topic{
+    position:relative; border-radius:3px; padding:20px 14px; text-align:left;
+    border:1px solid var(--panel-line); background:var(--bg); cursor:pointer;
+    min-height:200px; display:flex; flex-direction:column;
+    transition:border-color .15s;
+  }
+  .topic.unlocked{ border-color:var(--accent); }
+  .topic.unlocked:hover{ background:#0f1c2b; }
+  .topic.locked{ cursor:not-allowed; opacity:.7; }
+  .topic .t-num{
+    font-family:'Literata',serif; font-size:.7rem; color:var(--ink-dim);
+    letter-spacing:.1em; margin-bottom:12px;
+  }
+  .topic .t-title{ font-family:'Literata',serif; font-size:1rem; line-height:1.35; font-weight:600; }
+  .topic .t-sub{ font-size:.72rem; color:var(--ink-dim); margin-top:auto; padding-top:12px; letter-spacing:.02em; }
+  .topic.unlocked .t-sub{ color:var(--accent); }
+  .topic.locked .t-sub{ color:#5b6c7d; }
+
+  /* Escudo CSMT como ícono de bloqueado */
+  .csmt-shield{ width:auto; height:54px; max-width:64px; object-fit:contain; display:block; margin-bottom:14px; }
+  svg.csmt-shield{ width:44px; height:50px; }
+
+  .wrap{ display:grid; grid-template-columns:340px 1fr; min-height:100vh; position:relative; z-index:1; }
+  @media (max-width:860px){ .wrap{grid-template-columns:1fr;} }
+  .panel{ padding:26px 24px; border-right:1px solid var(--panel-line); background:var(--panel); overflow-y:auto; }
+  @media (max-width:860px){ .panel{border-right:none;border-bottom:1px solid var(--panel-line);} }
+  h1{ font-size:1.35rem; font-weight:600; line-height:1.25; margin:0 0 6px; letter-spacing:-0.01em; }
+  .sub-text{ color:var(--ink-dim); font-size:.86rem; margin:0 0 22px; line-height:1.55; }
+  label{ display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-dim); margin-bottom:8px; font-weight:600; }
+  .group{margin-bottom:20px;}
+  select{
+    width:100%; background:var(--bg); color:var(--ink);
+    border:1px solid var(--panel-line); border-radius:3px;
+    padding:10px 12px; font-size:.9rem; font-family:inherit;
+  }
+  optgroup{color:var(--ink-dim);}
+  input[type=range]{ width:100%; accent-color:var(--accent); }
+  .conc-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .conc-val{ font-variant-numeric:tabular-nums; color:var(--ink); font-size:.9rem; }
+  .card{ background:var(--bg); border:1px solid var(--panel-line); border-radius:3px; padding:14px 16px; margin-bottom:12px; }
+  .card h2{ font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-dim); margin:0 0 10px; font-family:'Inter',sans-serif; font-weight:600; }
+  .eq{ font-size:1rem; line-height:1.55; }
+  .eq .arrow{color:var(--accent);margin:0 6px;}
+  .math-line{ display:flex; justify-content:space-between; font-size:.84rem; padding:4px 0; border-bottom:1px dashed var(--panel-line); gap:10px; }
+  .math-line:last-child{border-bottom:none;}
+  .math-line span:first-child{color:var(--ink-dim);}
+  .math-line span:last-child{ font-variant-numeric:tabular-nums; color:var(--ink); font-weight:500; text-align:right; }
+  .ph-big{ font-size:2.1rem; font-weight:600; font-family:'Literata',serif; margin:2px 0; letter-spacing:-0.02em; }
+  .ph-label{color:var(--ink-dim);font-size:.82rem;}
+
+  /* Escala de colores */
+  .color-scale{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .color-row{ display:flex; align-items:center; gap:10px; font-size:.82rem; }
+  .color-row .swatch{
+    width:20px; height:20px; border-radius:2px;
+    border:1px solid var(--panel-line); flex-shrink:0;
+    padding:0; cursor:pointer; -webkit-appearance:none; appearance:none;
+    overflow:hidden; background-clip:padding-box;
+  }
+  .color-row .swatch::-webkit-color-swatch-wrapper{ padding:0; }
+  .color-row .swatch::-webkit-color-swatch{ border:none; }
+  .color-row .swatch::-moz-color-swatch{ border:none; }
+  .color-row .clabel{ color:var(--ink); font-weight:500; flex:1; }
+  .color-actions{ display:none; flex-direction:column; gap:6px; margin-top:8px; }
+  .color-actions.show{ display:flex; }
+  .btn-cc{
+    width:100%; background:transparent; color:var(--ink);
+    border:1px solid var(--panel-line); font-size:.8rem; padding:8px;
+    border-radius:3px; cursor:pointer; font-family:inherit; font-weight:500;
+  }
+  .btn-cc:hover{ border-color:var(--accent); }
+  .btn-cc.on{ border-color:var(--accent); color:var(--accent); }
+  .color-hint{ font-size:.74rem; color:var(--ink-dim); line-height:1.5; padding:4px 0; }
+
+  .stage{
+    position:relative; height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding:78px 20px 24px; overflow-y:auto;
+  }
+  @media (max-width:860px){ .stage{height:auto; min-height:80vh;} }
+  .topbar{ position:absolute; top:14px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:14px; padding:0 16px; flex-wrap:wrap; }
+  .state-label{ font-family:'Literata',serif; font-size:1rem; color:var(--ink); text-align:left; font-weight:600; }
+  .state-label small{ display:block; color:var(--ink-dim); font-family:'Inter',sans-serif; font-size:.72rem; margin-top:2px; font-weight:400; }
+  button.btn-3d{
+    background:transparent; color:var(--ink); border:1px solid var(--panel-line);
+    font-size:.76rem; padding:7px 12px; cursor:pointer; border-radius:3px;
+    font-family:inherit; font-weight:500;
+  }
+  button.btn-3d small{ color:var(--ink-dim); font-size:.7rem; }
+  button.btn-3d:hover{ border-color:var(--accent); }
+  button.btn-3d.on{ border-color:var(--accent); color:var(--accent); }
+  .three-wrap{ display:none; width:100%; height:100%; position:relative; }
+  .mol-field.is3d svg{ display:none; }
+  .mol-field.is3d .three-wrap{ display:block; }
+  .mol-field.is3d{ height:min(460px, 56vh); }
+  canvas.three{ display:block; width:100%; height:100%; touch-action:none; cursor:grab; }
+  .hint3d{ position:absolute; left:12px; bottom:9px; font-size:.68rem; color:var(--ink-dim); pointer-events:none; max-width:70%; }
+  button.reset3d{
+    position:absolute; right:10px; top:10px; background:rgba(16,31,48,.85);
+    color:var(--ink); border:1px solid var(--panel-line); font-size:.72rem;
+    padding:6px 12px; cursor:pointer; border-radius:3px; font-family:inherit;
+  }
+
+  .mol-field{
+    position:relative; width:min(620px, 100%); height:min(340px, 44vh);
+    border:1px solid var(--panel-line); border-radius:3px; background:var(--water); overflow:hidden;
+  }
+  svg{ width:100%; height:100%; display:block; }
+  .atom{ transition: cx 1.7s cubic-bezier(.22,.7,.2,1), cy 1.7s cubic-bezier(.22,.7,.2,1), opacity .6s ease; cursor:pointer; }
+  .atomLabel{ transition: x 1.7s cubic-bezier(.22,.7,.2,1), y 1.7s cubic-bezier(.22,.7,.2,1), opacity .6s ease; font-weight:700; fill:#0B1520; text-anchor:middle; dominant-baseline:central; pointer-events:none; }
+  .bond{ transition: x1 1.7s cubic-bezier(.22,.7,.2,1), y1 1.7s cubic-bezier(.22,.7,.2,1), x2 1.7s cubic-bezier(.22,.7,.2,1), y2 1.7s cubic-bezier(.22,.7,.2,1), opacity .6s ease; stroke:rgba(234,242,245,.55); stroke-width:3; }
+
+  .pool-ctrl{ display:none; align-items:center; gap:8px; font-size:.72rem; color:var(--ink-dim); }
+  .pool-btns{ display:flex; gap:3px; }
+  .pool-btns button{
+    background:var(--bg); color:var(--ink-dim); border:1px solid var(--panel-line);
+    padding:4px 9px; font-size:.72rem; border-radius:2px; font-weight:600; cursor:pointer;
+    font-family:inherit;
+  }
+  .pool-btns button.on{ background:var(--accent); color:#0B1520; border-color:var(--accent); }
+
+  .swap-row{ display:none; width:100%; max-width:600px; margin:10px auto 0; justify-content:flex-end; }
+  .swap-ctrl{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .swap-label{ font-size:.68rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.04em; }
+  .swap-btns{ display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
+  .swap-btns button{
+    background:var(--bg); color:var(--ink-dim); border:1px solid var(--panel-line);
+    padding:5px 10px; font-size:.72rem; border-radius:2px; font-weight:600; cursor:pointer;
+    font-family:inherit;
+  }
+  .swap-btns button.on{ background:var(--accent); color:#0B1520; border-color:var(--accent); }
+  .swap-timer-box{ display:none; align-items:center; gap:6px; font-size:.72rem; color:var(--ink-dim); }
+  .swap-timer-box input{
+    width:52px; background:var(--bg); color:var(--ink); border:1px solid var(--panel-line);
+    border-radius:2px; padding:3px 6px; font-family:inherit; font-size:.78rem; text-align:center;
+  }
+
+  .mode-menu{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(11,21,32,.88); z-index:30; }
+  .mode-menu.show{ display:flex; }
+  .mode-menu-card{
+    display:flex; flex-direction:column; gap:8px; min-width:240px;
+    background:var(--panel); border:1px solid var(--panel-line);
+    border-radius:4px; padding:20px;
+  }
+  .mode-menu-title{ font-family:'Literata',serif; color:var(--ink); text-align:center; margin-bottom:6px; font-size:1rem; font-weight:600; }
+  .mode-menu-card button{
+    width:100%; background:var(--bg); color:var(--ink);
+    border:1px solid var(--panel-line); padding:10px 14px; font-size:.85rem;
+    border-radius:3px; cursor:pointer; font-family:inherit; font-weight:500;
+    text-align:left;
+  }
+  .mode-menu-card button:hover{ border-color:var(--accent); }
+  .mode-menu-card button.ghost{ background:transparent; color:var(--ink-dim); }
+
+  .mode-hud{ position:absolute; left:0; right:0; bottom:0; padding:10px 12px; display:none; flex-direction:column; align-items:center; gap:6px; z-index:15; }
+  .hud-hint{
+    background:rgba(16,31,48,.85); border:1px solid var(--panel-line);
+    color:var(--ink-dim); font-size:.7rem; padding:6px 12px; border-radius:3px;
+    text-align:center; pointer-events:none; max-width:90%;
+  }
+  .pov-switch{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .pov-switch button{
+    font-size:.72rem; padding:6px 12px; border-radius:3px;
+    background:var(--bg); border:1px solid var(--panel-line); color:var(--ink);
+    cursor:pointer; font-family:inherit;
+  }
+  .pov-switch button.ghost{ background:transparent; color:var(--ink-dim); }
+  .viewer-badge{
+    background:rgba(232,89,58,.20); color:#FFC1A8; border:1px solid var(--accent);
+    padding:5px 12px; border-radius:2px; font-size:.72rem; font-weight:600;
+    white-space:nowrap; letter-spacing:.02em;
+  }
+  .viewer-badge:empty{ display:none; }
+  .mol-levels{
+    display:none; align-items:center; gap:8px; font-size:.72rem; color:var(--ink-dim);
+    background:rgba(16,31,48,.85); border:1px solid var(--panel-line); border-radius:2px;
+    padding:5px 10px;
+  }
+  .mol-levels.on{ display:flex; }
+  .mol-levels .lvl-btns{ display:flex; gap:3px; }
+  .mol-levels .lvl-btns button{
+    background:var(--bg); color:var(--ink-dim); border:1px solid var(--panel-line);
+    padding:3px 9px; font-size:.7rem; border-radius:2px; font-weight:600; cursor:pointer;
+    font-family:inherit;
+  }
+  .mol-levels .lvl-btns button.on{ background:var(--accent); color:#0B1520; border-color:var(--accent); }
+
+  .controls{ display:flex; align-items:center; gap:14px; margin-top:18px; flex-wrap:wrap; justify-content:center; }
+  button{
+    font-family:inherit; font-size:.88rem; font-weight:600;
+    color:#0B1520; background:var(--accent); border:none; border-radius:3px;
+    padding:11px 20px; cursor:pointer; letter-spacing:.01em;
+  }
+  button:active{ transform:translateY(1px); }
+
+  .explain{ width:min(620px,100%); margin-top:14px; background:var(--panel); border:1px solid var(--panel-line); border-radius:3px; padding:14px 16px; text-align:left; }
+  .ex-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+  .pill{
+    font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; font-weight:700;
+    padding:3px 10px; border-radius:2px; border:1px solid var(--panel-line);
+    color:#FFFFFF; white-space:nowrap;
+  }
+  .pill.ok{ background:rgba(232,89,58,.15); border-color:var(--accent); color:#FFFFFF; }
+  .pill.no{ background:rgba(95,201,192,.15); border-color:var(--anion); color:#FFFFFF; }
+  .pill.wait{ background:rgba(147,166,184,.15); border-color:var(--ink-dim); color:#FFFFFF; }
+  .ex-title{ font-family:'Literata',serif; font-size:.98rem; color:var(--ink); font-weight:600; }
+  .ex-body{ font-size:.84rem; color:var(--ink-dim); line-height:1.6; }
+  .ex-body b{ color:var(--ink); font-weight:600; }
+  .caption{ max-width:540px; text-align:center; color:var(--ink-dim); font-size:.82rem; margin-top:14px; line-height:1.5; }
+  .legend-row{ display:flex; gap:16px; margin-top:12px; flex-wrap:wrap; justify-content:center; }
+  .legend-row div{ display:flex; align-items:center; gap:6px; font-size:.75rem; color:var(--ink-dim); }
+  .dot{ width:9px;height:9px;display:inline-block; }
+
+  /* ============================================================
+     Módulo 02 · Equilibrio de solubilidad
+     ============================================================ */
+  .wrap.hidden{ display:none; }
+  .hide{ display:none !important; }
+  .back-link{
+    background:transparent; color:var(--ink-dim); border:1px solid var(--panel-line);
+    font-size:.74rem; padding:6px 11px; margin-bottom:14px; font-weight:500; letter-spacing:0;
+  }
+  .back-link:hover{ border-color:var(--accent); color:var(--ink); }
+  .eq-head{ display:flex; gap:8px; align-items:center; margin-bottom:14px; }
+  .eq-head .back-link{ margin-bottom:0; }
+  .mini-btn{
+    background:var(--bg); color:var(--ink); border:1px solid var(--panel-line);
+    font-size:.74rem; padding:6px 10px; font-weight:600; border-radius:3px;
+  }
+  .mini-btn:hover{ border-color:var(--accent); }
+  .mini-btn:disabled{ opacity:.35; cursor:not-allowed; border-color:var(--panel-line); }
+  .hint-s{ font-size:.72rem; color:var(--ink-dim); line-height:1.5; margin-top:6px; }
+  select:disabled, input[type=range]:disabled{ opacity:.4; }
+
+  .eq-block{ width:min(620px,100%); display:flex; flex-direction:column; align-items:center; }
+  .sim-wrap{
+    position:relative; width:min(620px,100%); height:min(340px,44vh); min-height:260px;
+    border:1px solid var(--panel-line); border-radius:3px; background:var(--water); overflow:hidden;
+  }
+  .sim-wrap canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .sim-tag{ position:absolute; left:10px; top:8px; font-size:.68rem; color:rgba(234,242,245,.7); pointer-events:none; z-index:2; }
+  .sol-info{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; width:min(620px,100%); }
+  .chip{ font-size:.74rem; color:var(--ink-dim); border:1px solid var(--panel-line); padding:5px 10px; border-radius:2px; background:var(--panel); }
+  .chip b{ color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+
+  .gauge{ position:relative; height:10px; border-radius:2px; margin:14px 4px 6px;
+    background:linear-gradient(90deg, rgba(95,201,192,.35) 0%, rgba(95,201,192,.35) 70%, rgba(232,89,58,.45) 70%, rgba(232,89,58,.45) 100%); }
+  .gauge .tick{ position:absolute; top:-4px; bottom:-4px; left:70%; width:2px; background:var(--ink); }
+  .gauge .mark{ position:absolute; top:-5px; width:12px; height:20px; margin-left:-6px; background:var(--accent); border:2px solid var(--bg); border-radius:2px; transition:left .25s linear; }
+  .gauge-lbl{ display:flex; justify-content:space-between; font-size:.68rem; color:var(--ink-dim); }
+
+  /* ---- Intro y recorrido guiado ---- */
+  .tour{
+    position:fixed; left:340px; right:0; bottom:0; z-index:60; background:var(--panel);
+    border-top:2px solid var(--accent); padding:16px 26px 14px; box-shadow:0 -12px 32px rgba(0,0,0,.4);
+  }
+  @media (max-width:860px){ .tour{ left:0; } }
+  .tour-bar{ height:3px; background:var(--panel-line); margin:-16px -26px 12px; }
+  .tour-bar i{ display:block; height:100%; background:var(--accent); transition:width .25s; }
+  .tour-top{ display:flex; justify-content:space-between; font-size:.68rem; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+  .tour h3{ font-family:'Literata',Georgia,serif; font-size:1.02rem; margin:0 0 6px; font-weight:600; }
+  .tour p{ margin:0 0 12px; font-size:.88rem; line-height:1.55; color:var(--ink-dim); max-width:860px; }
+  .tour p b{ color:var(--ink); }
+  .tour-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .tour-actions .spacer{ flex:1; }
+  .tour-actions .primary{ background:var(--accent); color:#0B1520; border-color:var(--accent); }
+  body.touring #eqWrap .stage, body.touring #eqWrap .panel{ padding-bottom:250px; }
+  .tour-hl{ outline:2px solid var(--accent); outline-offset:4px; border-radius:3px; animation:tourPulse 1.4s ease-in-out infinite; }
+  @keyframes tourPulse{ 50%{ outline-color:rgba(232,89,58,.3); } }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div id="pixelBg"><canvas id="pixelCanvas"></canvas></div>
+
+<!-- Logo CSMT: se carga desde Csmt.png (misma carpeta que index.html). Si no se encuentra, se usa el escudo SVG de respaldo. -->
+<script>
+function csmtFallback(img){
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('class','csmt-shield');
+  svg.innerHTML = '<use href="#csmtShield"/>';
+  img.replaceWith(svg);
+}
+</script>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="csmtShield" viewBox="0 0 100 116">
+      <defs>
+        <clipPath id="shieldClip">
+          <path d="M50 4 C68 4 88 8 91 16 C94 24 93 42 93 60 C93 84 71 105 50 113 C29 105 7 84 7 60 C7 42 6 24 9 16 C12 8 32 4 50 4 Z"/>
+        </clipPath>
+      </defs>
+      <path d="M50 4 C68 4 88 8 91 16 C94 24 93 42 93 60 C93 84 71 105 50 113 C29 105 7 84 7 60 C7 42 6 24 9 16 C12 8 32 4 50 4 Z"
+            fill="#f2f2f2" stroke="#1b3b5e" stroke-width="3.5"/>
+      <g clip-path="url(#shieldClip)">
+        <rect x="42" y="0" width="16" height="116" fill="#1b3b5e"/>
+        <rect x="0" y="44" width="100" height="24" fill="#1b3b5e"/>
+        <text x="50" y="57" font-family="Arial Black, Impact, sans-serif" font-size="19" font-weight="900"
+              fill="#f5c518" stroke="#1b3b5e" stroke-width="0.7" text-anchor="middle" dominant-baseline="middle"
+              letter-spacing="0.3">CSMT</text>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="overlay" id="bgOverlay">
+  <div class="overlay-card">
+    <span class="overlay-label">Paso 1 · Estilo visual</span>
+    <h2>Elegí cómo querés ver el laboratorio</h2>
+    <p>El estilo se puede cambiar después desde el menú de configuración.</p>
+    <div class="choice-row">
+      <button class="choice-btn" data-bg="normal"><b>Fondo normal</b><span>Interfaz limpia, sobria, colores neutros</span></button>
+      <button class="choice-btn" data-bg="pixel"><b>Fondo pixel art</b><span>Vaso de laboratorio que se va llenando</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="topicsOverlay">
+  <div class="overlay-card" style="max-width:760px;">
+    <span class="overlay-label">Paso 2 · Contenido</span>
+    <h2>Elegí un tema</h2>
+    <p>Elegí un módulo. Los bloqueados se desbloquean al completar el anterior.</p>
+    <div class="topics-grid">
+      <div class="topic unlocked" data-topic="ph">
+        <div class="t-num">Módulo 01</div>
+        <div class="t-title">pH: Ácidos fuertes y débiles, bases fuertes y débiles</div>
+        <div class="t-sub">Disponible</div>
+      </div>
+      <div class="topic unlocked" data-topic="kps">
+        <div class="t-num">Módulo 02</div>
+        <div class="t-title">Equilibrio de solubilidad (Kps)</div>
+        <div class="t-sub">Disponible</div>
+      </div>
+      <div class="topic locked">
+        <img class="csmt-shield" src="Csmt.png" alt="Logo CSMT" onerror="csmtFallback(this)">
+        <div class="t-num">Módulo 03</div>
+        <div class="t-title">Titulaciones ácido–base</div>
+        <div class="t-sub">Bloqueado</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Advertencia ANTES de entrar al modo persona -->
+<div class="overlay hidden" id="personWarning">
+  <div class="overlay-card" style="max-width:480px;">
+    <span class="overlay-label" style="color:#FFB29A;">Aviso previo</span>
+    <h2>Modo persona · Fase de prueba</h2>
+    <p style="margin-bottom:22px;">
+      Este modo <b style="color:var(--ink);">no está terminado</b> y no se recomienda su uso.
+      El desplazamiento, la gravedad y las colisiones son aproximados y pueden presentar
+      comportamientos inesperados.
+    </p>
+    <div class="choice-row">
+      <button class="choice-btn" data-warn="cancel"><b>Cancelar</b><span>Volver al menú anterior</span></button>
+      <button class="choice-btn" data-warn="ok" style="border-color:#E8593A;">
+        <b>Continuar de todas formas</b><span>Entrar al modo persona</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="phWrap">
+  <div class="panel">
+    <button type="button" class="back-link" data-back>← Temas</button>
+    <h1>Disociación en agua</h1>
+    <p class="sub-text">Elegí un ácido o una base, fuerte o débil, y mirá cómo se rompe (o no) el enlace y qué átomo se transfiere hacia el agua.</p>
+
+    <div class="group">
+      <label for="substance">Sustancia</label>
+      <select id="substance">
+        <optgroup label="Ácidos fuertes">
+          <option value="HCl">Ácido clorhídrico — HCl</option>
+          <option value="HNO3">Ácido nítrico — HNO₃</option>
+          <option value="HBr">Ácido bromhídrico — HBr</option>
+          <option value="HI">Ácido yodhídrico — HI</option>
+        </optgroup>
+        <optgroup label="Ácidos débiles">
+          <option value="CH3COOH">Ácido acético — CH₃COOH</option>
+          <option value="HF">Ácido fluorhídrico — HF</option>
+          <option value="HNO2">Ácido nitroso — HNO₂</option>
+        </optgroup>
+        <optgroup label="Bases fuertes">
+          <option value="NaOH">Hidróxido de sodio — NaOH</option>
+          <option value="KOH">Hidróxido de potasio — KOH</option>
+          <option value="CaOH2">Hidróxido de calcio — Ca(OH)₂</option>
+        </optgroup>
+        <optgroup label="Bases débiles">
+          <option value="NH3">Amoníaco — NH₃</option>
+          <option value="CH3NH2">Metilamina — CH₃NH₂</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="group">
+      <div class="conc-row">
+        <label style="margin-bottom:0;">Concentración inicial</label>
+        <span class="conc-val" id="concVal">0,10 M</span>
+      </div>
+      <input type="range" id="conc" min="-3" max="0" step="0.05" value="-1">
+    </div>
+
+    <div class="card">
+      <h2>Reacción</h2>
+      <div class="eq" id="eqBox"></div>
+    </div>
+
+    <div class="card">
+      <h2>Cálculo</h2>
+      <div id="mathBox"></div>
+    </div>
+
+    <div class="card">
+      <h2>pH resultante</h2>
+      <div class="ph-big" id="phVal">1.00</div>
+      <div class="ph-label" id="phLabel">Fuertemente ácido</div>
+    </div>
+
+    <div class="card" id="colorCard" style="margin-bottom:0;">
+      <h2>Escala de colores</h2>
+      <div class="color-scale" id="colorScale"></div>
+      <button type="button" class="btn-cc" id="btnChangeColor">Cambiar de color</button>
+      <div class="color-actions" id="colorActions">
+        <div class="color-hint">Hacé clic en cada muestra para elegir el color. Los cambios se aplican al instante en el dibujo 2D y en el 3D.</div>
+        <button type="button" class="btn-cc" id="btnResetColor">Restaurar colores por defecto</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="topbar">
+      <div class="state-label" id="stateLabel">Antes de disolverse<small id="stateSub"></small></div>
+      <div class="pool-ctrl" id="poolCtrl"><span>Moléculas</span><div class="pool-btns" id="poolBtns"></div></div>
+      <button class="btn-3d" id="btn3d" type="button">Plano 3D <small>(Fase de prueba)</small></button>
+    </div>
+    <div class="mol-field" id="molField">
+      <svg viewBox="0 0 600 320" id="svgField"></svg>
+      <div class="three-wrap" id="threeWrap">
+        <div class="hint3d">Arrastrá para girar · rueda o pellizco para acercar · clic derecho o Shift+arrastrar para mover · tocá una molécula para ver qué pasó</div>
+        <button class="reset3d" id="reset3d" type="button">Restablecer vista</button>
+      </div>
+      <div class="mode-menu" id="modeMenu">
+        <div class="mode-menu-card">
+          <div class="mode-menu-title">Visualización 3D</div>
+          <button type="button" data-choice="orbit">Visualizar (cámara orbital)</button>
+          <button type="button" data-choice="presence">Estar presente</button>
+        </div>
+      </div>
+      <div class="mode-menu" id="presenceMenu">
+        <div class="mode-menu-card">
+          <div class="mode-menu-title">Elegí la perspectiva</div>
+          <button type="button" data-choice="person">Persona (dentro del líquido)</button>
+          <button type="button" data-choice="molecule">Molécula</button>
+          <button type="button" class="ghost" data-choice="back">← Volver</button>
+        </div>
+      </div>
+      <div class="mode-hud" id="modeHud">
+        <div class="viewer-badge" id="viewerBadge"></div>
+        <div class="hud-hint" id="hudHint"></div>
+        <div class="pov-switch" id="povSwitch"></div>
+        <div class="mol-levels" id="molLevels">
+          <span>Nivel:</span>
+          <div class="lvl-btns" id="lvlBtns"></div>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="toggleBtn">Disolver en agua →</button>
+    </div>
+    <div class="swap-row" id="swapRow">
+      <div class="swap-ctrl">
+        <span class="swap-label">Moléculas que reaccionan</span>
+        <div class="swap-btns" id="swapBtns">
+          <button type="button" data-mode="force">Forzar otro compuesto</button>
+          <button type="button" data-mode="timer">Timer</button>
+          <button type="button" data-mode="random" class="on">Aleatorio</button>
+          <button type="button" data-mode="none">No cambiar</button>
+        </div>
+        <div class="swap-timer-box" id="swapTimerBox">
+          <input type="number" id="swapSecondsInput" min="1" max="30" step="1" value="5">
+          <span>segundos</span>
+        </div>
+      </div>
+    </div>
+    <div class="legend-row" id="legendRow"></div>
+    <div class="explain" id="explainBox">
+      <div class="ex-head"><span class="pill wait" id="exPill">Sin reaccionar</span><span class="ex-title" id="exTitle"></span></div>
+      <div class="ex-body" id="caption"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MÓDULO 02 · Equilibrio de solubilidad (solo contenido del apunte)
+     ============================================================ -->
+<div class="wrap hidden" id="eqWrap">
+  <div class="panel">
+    <div class="eq-head">
+      <button type="button" class="back-link" data-back>← Temas</button>
+      <button type="button" class="back-link" id="eqHelp">? Explicación</button>
+    </div>
+    <h1>Equilibrio de solubilidad</h1>
+    <p class="sub-text">Elegí una sal poco soluble, cuánta agregás y si hay ion común o pH, y mirá cómo Q<sub>ps</sub> se compara con K<sub>ps</sub>.</p>
+
+    <div class="group">
+      <label for="kpsSalt">Sal poco soluble</label>
+      <select id="kpsSalt"></select>
+    </div>
+
+    <div class="group">
+      <div class="conc-row">
+        <label style="margin-bottom:0;">Sal agregada</label>
+        <span class="conc-val" id="kpsTVal"></span>
+      </div>
+      <input type="range" id="kpsT" min="-12" max="-1" step="0.05" value="-3">
+      <div class="hint-s">Mol de sal por litro de agua.</div>
+    </div>
+
+    <div class="group">
+      <label for="kpsCI">Ion común y pH</label>
+      <select id="kpsCI"></select>
+      <div id="kpsCrow">
+        <div class="conc-row" style="margin-top:12px;">
+          <span class="hint-s" style="margin:0;">Concentración del ion aportado</span>
+          <span class="conc-val" id="kpsCVal"></span>
+        </div>
+        <input type="range" id="kpsC" min="-5" max="0" step="0.05" value="-2">
+      </div>
+      <div id="kpsPHrow" class="hide">
+        <div class="conc-row" style="margin-top:12px;">
+          <span class="hint-s" style="margin:0;">pH de la solución</span>
+          <span class="conc-val" id="kpsPHVal"></span>
+        </div>
+        <input type="range" id="kpsPH" min="0" max="14" step="0.1" value="7">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Reacción</h2>
+      <div class="eq" id="kpsEq"></div>
+    </div>
+
+    <div class="card">
+      <h2>Cálculo</h2>
+      <div id="kpsMath"></div>
+    </div>
+
+    <div class="card">
+      <h2>Q<sub>ps</sub> frente a K<sub>ps</sub></h2>
+      <div class="gauge"><div class="tick"></div><div class="mark" id="kpsMark" style="left:70%"></div></div>
+      <div class="gauge-lbl" style="position:relative;height:14px;">
+        <span style="position:absolute;left:0;">Insaturada</span>
+        <span style="position:absolute;left:70%;transform:translateX(-50%);color:var(--ink);">Q<sub>ps</sub> = K<sub>ps</sub></span>
+        <span style="position:absolute;right:0;">Sobresat.</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0;">
+      <h2>Escala de colores</h2>
+      <div class="color-scale" id="kpsColorScale"></div>
+      <button type="button" class="btn-cc" id="kpsBtnColor">Cambiar de color</button>
+      <div class="color-actions" id="kpsColorActions">
+        <div class="color-hint">Hacé clic en cada muestra para elegir el color.</div>
+        <button type="button" class="btn-cc" id="kpsBtnResetColor">Restaurar colores por defecto</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="topbar">
+      <div class="state-label" id="eqStateLabel">Equilibrio de solubilidad<small id="eqStateSub"></small></div>
+    </div>
+    <div id="kpsStage" class="eq-block">
+      <div class="sim-wrap">
+        <canvas id="kpsCanvas"></canvas>
+        <div class="sim-tag">Cantidad de partículas ilustrativa</div>
+      </div>
+      <div class="sol-info" id="kpsChips"></div>
+      <div class="legend-row" id="kpsLegend"></div>
+      <div class="explain" id="kpsExplain">
+        <div class="ex-head"><span class="pill wait" id="kpsPill">—</span><span class="ex-title" id="kpsExTitle"></span></div>
+        <div class="ex-body" id="kpsExBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="eqIntroOverlay">
+  <div class="overlay-card" style="max-width:600px;">
+    <span class="overlay-label">Módulo 02 · Equilibrio de solubilidad</span>
+    <h2>¿Ya sabés cómo funciona o querés una explicación?</h2>
+    <p>La explicación recorre el simulador paso a paso con la teoría de tu apunte: reacciones de precipitación, producto de solubilidad, solubilidad y solubilidad molar, Q<sub>ps</sub> frente a K<sub>ps</sub>, ion común y pH. El simulador se va moviendo solo mientras tanto, y podés salir cuando quieras.</p>
+    <div class="choice-row">
+      <button class="choice-btn" data-eqintro="skip"><b>Ya sé, ir al simulador</b><span>Entrar directo, sin explicación</span></button>
+      <button class="choice-btn" data-eqintro="tour"><b>Quiero la explicación</b><span>Paso a paso, con el simulador en vivo</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="tour hide" id="tourDock">
+  <div class="tour-bar"><i id="tourFill" style="width:0%"></i></div>
+  <div class="tour-top"><span id="tourCount"></span><span id="tourPart"></span></div>
+  <h3 id="tourTitle"></h3>
+  <p id="tourBody"></p>
+  <div class="tour-actions">
+    <button type="button" class="mini-btn" id="tourPrev">← Anterior</button>
+    <button type="button" class="mini-btn primary" id="tourNext">Siguiente →</button>
+    <span class="spacer"></span>
+    <button type="button" class="mini-btn" id="tourSkip">Salir de la explicación</button>
+  </div>
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+
+/* ============================================================
+   COLORES CONFIGURABLES
+   ============================================================ */
+const DEFAULT_COLORS = { water:'#6FA8CE', cation:'#F2A65A', anion:'#5FC9C0' };
+let groupColors = { ...DEFAULT_COLORS };
+
+function atomColorHex(key){
+  if(key==='O' || key==='H1' || key==='H2') return groupColors.water;
+  if(key==='A') return groupColors.cation;
+  if(key==='B') return groupColors.anion;
+  return '#FFFFFF';
+}
+function hexToInt(hex){ return parseInt(hex.replace('#',''), 16); }
+
+/* ============================================================
+   OVERLAYS INICIALES + advertencia previa al modo persona
+   ============================================================ */
+(function initStartup(){
+  const bgOverlay = document.getElementById('bgOverlay');
+  const topicsOverlay = document.getElementById('topicsOverlay');
+  const warnOverlay = document.getElementById('personWarning');
+
+  bgOverlay.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-bg]');
+    if(!btn) return;
+    const mode = btn.dataset.bg;
+    if(mode === 'pixel'){ document.body.classList.add('pixel'); PixelVase.enable(); }
+    else { document.body.classList.remove('pixel'); PixelVase.disable(); }
+    bgOverlay.classList.add('hidden');
+    topicsOverlay.classList.remove('hidden');
+  });
+
+  topicsOverlay.addEventListener('click', e=>{
+    const topic = e.target.closest('.topic');
+    if(!topic || topic.classList.contains('locked')) return;
+    topicsOverlay.classList.add('hidden');
+    if(window.showTopic) window.showTopic(topic.dataset.topic);
+  });
+
+  warnOverlay.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-warn]');
+    if(!btn) return;
+    warnOverlay.classList.add('hidden');
+    if(btn.dataset.warn === 'ok'){
+      enter3D('person');
+    } else {
+      document.getElementById('presenceMenu').classList.add('show');
+    }
+  });
+})();
+
+/* ============================================================
+   VASO PIXEL ART
+   ============================================================ */
+const PixelVase = (function(){
+  const canvas = document.getElementById('pixelCanvas');
+  const ctx = canvas.getContext('2d');
+  const PX = 8;
+  let W=0, H=0, running=false, raf=null;
+  let level = 0.15, targetLevel = 0.15;
+  let bubbles = [];
+
+  function stageBounds(){
+    const st = [...document.querySelectorAll('.stage')].find(x=>x.offsetParent!==null) || document.querySelector('.stage');
+    if(!st) return {left:0, width: window.innerWidth};
+    const r = st.getBoundingClientRect();
+    return {left: r.left, width: r.width};
+  }
+
+  function resize(){
+    W = Math.max(120, Math.floor(window.innerWidth / PX));
+    H = Math.max(90, Math.floor(window.innerHeight / PX));
+    canvas.width = W; canvas.height = H;
+    canvas.style.width = window.innerWidth+'px';
+    canvas.style.height = window.innerHeight+'px';
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#0B1520'); g.addColorStop(1,'#0a1a28');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#122233';
+    ctx.fillRect(0, Math.floor(H*0.82), W, Math.floor(H*0.18));
+
+    const sb = stageBounds();
+    const stageL = Math.floor(sb.left / PX);
+    const stageW = Math.floor(sb.width / PX);
+    const centerX = stageL + Math.floor(stageW / 2);
+
+    const vaseW = Math.max(22, Math.floor(stageW*0.35));
+    const vaseH = Math.max(28, Math.floor(H*0.42));
+    const vx = centerX - Math.floor(vaseW/2);
+    const vy = Math.floor(H*0.82 - vaseH);
+
+    ctx.fillStyle = 'rgba(150,200,220,0.10)';
+    ctx.fillRect(vx, vy, vaseW, vaseH);
+    ctx.strokeStyle = '#7FB6C9';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(vx+0.5, vy+0.5, vaseW-1, vaseH-1);
+
+    ctx.fillStyle = '#7FB6C9';
+    for(let i=1;i<4;i++){
+      const yy = vy + Math.floor(vaseH*i/4);
+      ctx.fillRect(vx+2, yy, Math.floor(vaseW*0.14), 1);
+      ctx.fillRect(vx+vaseW-Math.floor(vaseW*0.14)-2, yy, Math.floor(vaseW*0.14), 1);
+    }
+
+    const liquidH = Math.floor((vaseH-4) * level);
+    const ly = vy + vaseH - 2 - liquidH;
+    const lg = ctx.createLinearGradient(0, ly, 0, vy+vaseH);
+    lg.addColorStop(0, '#7FE0D8');
+    lg.addColorStop(1, '#2A8E9B');
+    ctx.fillStyle = lg;
+    ctx.fillRect(vx+2, ly, vaseW-4, liquidH);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(vx+2, ly, vaseW-4, 1);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillRect(vx+2, ly-1, 2, 1);
+    ctx.fillRect(vx+vaseW-4, ly-1, 2, 1);
+
+    bubbles.forEach(b=>{
+      const by = vy + vaseH - b.y;
+      if(by > ly && by < vy+vaseH){
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillRect(vx + 2 + Math.floor(b.x*(vaseW-4)), Math.floor(by), 1, 1);
+      }
+    });
+
+    ctx.fillStyle = '#5FC9C0';
+    for(let i=0;i<6;i++){
+      const dx = (i*97)%W;
+      const dy = (i*53 + (performance.now()*0.02))%H;
+      if(dx>vx-6 && dx<vx+vaseW+6 && dy>vy && dy<vy+vaseH) continue;
+      ctx.fillRect(Math.floor(dx), Math.floor(dy), 1, 1);
+    }
+  }
+
+  function loop(){
+    if(!running) return;
+    raf = requestAnimationFrame(loop);
+    level += (targetLevel - level) * 0.02;
+    if(level > 0.2 && Math.random() < 0.08){
+      bubbles.push({x: Math.random(), y: 0, speed: 0.15 + Math.random()*0.25});
+    }
+    bubbles.forEach(b=> b.y += b.speed);
+    bubbles = bubbles.filter(b=> b.y < H*0.5);
+    draw();
+  }
+
+  return {
+    enable(){ resize(); window.addEventListener('resize', resize); running = true; loop(); },
+    disable(){ running = false; cancelAnimationFrame(raf); window.removeEventListener('resize', resize); },
+    setLevel(v){ targetLevel = Math.max(0.05, Math.min(0.95, v)); },
+    reset(){ targetLevel = 0.15; bubbles = []; }
+  };
+})();
+
+/* ============================================================
+   DATOS QUÍMICOS
+   ============================================================ */
+const DATA = {
+  HCl:   {nameHTML:'HCl', mech:'acid', strong:true, frag:'Cl', n:1},
+  HNO3:  {nameHTML:'HNO<sub>3</sub>', mech:'acid', strong:true, frag:'NO3', n:1},
+  HBr:   {nameHTML:'HBr', mech:'acid', strong:true, frag:'Br', n:1},
+  HI:    {nameHTML:'HI', mech:'acid', strong:true, frag:'I', n:1},
+  CH3COOH:{nameHTML:'CH<sub>3</sub>COOH', mech:'acid', strong:false, frag:'CH3COO', Ka:1.8e-5, n:1},
+  HF:    {nameHTML:'HF', mech:'acid', strong:false, frag:'F', Ka:6.8e-4, n:1},
+  HNO2:  {nameHTML:'HNO<sub>2</sub>', mech:'acid', strong:false, frag:'NO2', Ka:4.5e-4, n:1},
+  NaOH:  {nameHTML:'NaOH', mech:'ionicBase', strong:true, metal:'Na', n:1},
+  KOH:   {nameHTML:'KOH', mech:'ionicBase', strong:true, metal:'K', n:1},
+  CaOH2: {nameHTML:'Ca(OH)<sub>2</sub>', mech:'ionicBase', strong:true, metal:'Ca2', n:2},
+  NH3:   {nameHTML:'NH<sub>3</sub>', mech:'protonBase', strong:false, base:'NH3', product:'NH4+', Kb:1.8e-5, n:1},
+  CH3NH2:{nameHTML:'CH<sub>3</sub>NH<sub>2</sub>', mech:'protonBase', strong:false, base:'CH3NH2', product:'CH3NH3+', Kb:4.4e-4, n:1},
+};
+
+const NAMES = {
+  HCl:['El','ácido clorhídrico'], HNO3:['El','ácido nítrico'], HBr:['El','ácido bromhídrico'], HI:['El','ácido yodhídrico'],
+  CH3COOH:['El','ácido acético'], HF:['El','ácido fluorhídrico'], HNO2:['El','ácido nitroso'],
+  NaOH:['El','hidróxido de sodio'], KOH:['El','hidróxido de potasio'], CaOH2:['El','hidróxido de calcio'],
+  NH3:['El','amoníaco'], CH3NH2:['La','metilamina']
+};
+Object.keys(NAMES).forEach(k=>{ DATA[k].art = NAMES[k][0]; DATA[k].full = NAMES[k][1]; });
+
+function parseFormula(str){
+  const segs=[]; let i=0;
+  while(i<str.length){
+    const c=str[i];
+    if(c==='^'){ segs.push([str.slice(i+1),'p']); break; }
+    const type = /[0-9]/.test(c) ? 's' : /[+\-]/.test(c) ? 'p' : 'n';
+    let j=i;
+    while(j<str.length){
+      const t2 = /[0-9]/.test(str[j]) ? 's' : /[+\-]/.test(str[j]) ? 'p' : 'n';
+      if(t2!==type) break;
+      j++;
+    }
+    segs.push([str.slice(i,j), type]);
+    i=j;
+  }
+  return segs;
+}
+function htmlFormula(str){
+  return parseFormula(str).map(([t,ty])=> ty==='s'?`<sub>${t}</sub>`: ty==='p'?`<sup>${t.replace('-','−')}</sup>`:t).join('');
+}
+function setSvgFormula(textEl, str){
+  textEl.textContent = '';
+  let baseline = 0;
+  parseFormula(str).forEach(([txt,type])=>{
+    const tspan = document.createElementNS(NS,'tspan');
+    tspan.textContent = type==='p' ? txt.replace('-','−') : txt;
+    let dy = 0;
+    if(type==='s' && baseline!==1){ dy=4; baseline=1; }
+    else if(type==='p' && baseline!==2){ dy=-5; baseline=2; }
+    else if(type==='n' && baseline!==0){ dy = baseline===1?-4:5; baseline=0; }
+    if(type!=='n') tspan.setAttribute('font-size','70%');
+    if(dy) tspan.setAttribute('dy', dy);
+    textEl.appendChild(tspan);
+  });
+}
+
+const LAYOUT = {
+  acid: {
+    before:{ O:[430,100], H1:[395,66], H2:[395,134], A:[150,210], B:[212,210] },
+    after: { O:[470,210], H1:[435,176], H2:[435,244], A:[512,210], B:[95,210] },
+    bondsBefore:['OH1','OH2','AB'],
+    bondsAfter:['OH1','OH2','OA']
+  },
+  ionicBase: {
+    before:{ O:[430,100], H1:[395,66], H2:[395,134], A:[150,210], B:[212,210] },
+    after: { O:[300,50], H1:[265,17], H2:[335,17], A:[105,210], B:[495,210] },
+    bondsBefore:['OH1','OH2','AB'],
+    bondsAfter:['OH1','OH2'],
+    fadeWater:true
+  },
+  protonBase: {
+    before:{ O:[430,100], H1:[395,66], H2:[395,134], A:[180,210] },
+    after: { O:[470,210], H1:[435,176], H2:[200,190], A:[150,210] },
+    bondsBefore:['OH1','OH2'],
+    bondsAfter:['OH1','H2A']
+  }
+};
+
+const svgField = document.getElementById('svgField');
+let units = [];
+let poolN = 4;
+let reactSet = new Set([0]);
+const KEYS = ['O','H1','H2','A','B'];
+const BOND_KEYS = ['OH1','OH2','AB','OA','H2A'];
+const BASE_FS = {O:14,H1:12,H2:12,A:13,B:12};
+function cellLayout(N){
+  const L = {
+    1:[[300,160]],
+    2:[[190,110],[410,210]],
+    3:[[150,90],[450,90],[300,240]],
+    4:[[150,80],[450,80],[150,240],[450,240]],
+    5:[[110,80],[300,58],[490,80],[190,250],[410,250]]
+  };
+  return L[N] || L[4];
+}
+function cellScale(N){
+  const S = {1:{s:1,sa:1},2:{s:.72,sa:.88},3:{s:.66,sa:.82},4:{s:.62,sa:.8},5:{s:.54,sa:.7}};
+  return S[N] || S[4];
+}
+
+function buildUnits(n){
+  svgField.innerHTML = '';
+  units = [];
+  for(let i=0;i<n;i++){
+    const u = {bonds:{}, atoms:{}, labels:{}};
+    BOND_KEYS.forEach(k=>{ const l=document.createElementNS(NS,'line'); l.setAttribute('class','bond'); svgField.appendChild(l); u.bonds[k]=l; });
+    KEYS.forEach(k=>{ const c=document.createElementNS(NS,'circle'); c.setAttribute('class','atom'); c.setAttribute('fill',atomColorHex(k)); c.setAttribute('stroke','rgba(11,21,32,.6)'); c.setAttribute('stroke-width','1.5'); c.dataset.unit=i; c.dataset.key=k; svgField.appendChild(c); u.atoms[k]=c; });
+    KEYS.forEach(k=>{ const t=document.createElementNS(NS,'text'); t.setAttribute('class','atomLabel'); svgField.appendChild(t); u.labels[k]=t; });
+    units.push(u);
+  }
+}
+
+function place(node, pos){ node.setAttribute('cx',pos[0]); node.setAttribute('cy',pos[1]); }
+function placeText(node, pos){ node.setAttribute('x',pos[0]); node.setAttribute('y',pos[1]); }
+function placeBond(line, p1, p2, visible){
+  if(!p1 || !p2){ line.style.opacity = 0; return; }
+  line.setAttribute('x1',p1[0]); line.setAttribute('y1',p1[1]);
+  line.setAttribute('x2',p2[0]); line.setAttribute('y2',p2[1]);
+  line.style.opacity = visible ? 1 : 0;
+}
+
+function describeUnit(d, after){
+  const L = LAYOUT[d.mech];
+  const labels = {O:'O', H1:'H', H2:'H', A:'', B:''};
+  let rA = 16, rB = 24;
+  if(d.mech==='acid'){
+    if(after) labels.O = 'O+';
+    labels.A = 'H';
+    labels.B = after ? d.frag+'-' : d.frag;
+    rA = 15; rB = Math.max(20, 9+d.frag.length*3);
+  } else if(d.mech==='ionicBase'){
+    const mp = d.metal.replace('2','');
+    labels.A = after ? (d.metal==='Ca2' ? 'Ca^2+' : mp+'+') : mp;
+    labels.B = after ? 'OH-' : 'OH';
+    rA = 19; rB = 22;
+  } else {
+    if(after) labels.O = 'O-';
+    const txt = after ? d.product : d.base;
+    labels.A = txt;
+    rA = Math.max(20, 9+txt.length*2.6);
+  }
+  return {
+    pos: after ? L.after : L.before,
+    labels,
+    radii: {O:19, H1:13, H2:13, A:rA, B:rB},
+    bonds: after ? L.bondsAfter : L.bondsBefore,
+    hasB: d.mech !== 'protonBase',
+    fade: d.mech==='ionicBase' && after && !!L.fadeWater
+  };
+}
+
+const SHAPE_SCALE = {2:0.54, 3:0.58, 4:0.54, 5:0.72}; // qué tan "grande" se ve la molécula reaccionando
+const MOVE_BLEND  = {2:0.88, 3:0.76, 4:0.48, 5:0.70}; // qué tan lejos viaja desde su posición inicial
+function centroidOf(P){
+  const ks = Object.keys(P);
+  let sx=0, sy=0;
+  ks.forEach(k=>{ sx+=P[k][0]; sy+=P[k][1]; });
+  return [sx/ks.length, sy/ks.length];
+}
+
+function renderUnit(u, d, after, s, sa, cx, cy, poolCount){
+  const info = describeUnit(d, after);
+  const L = LAYOUT[d.mech];
+  const T = p => [(p[0]-300)*s+cx, (p[1]-160)*s+cy];
+  const pos = {};
+  if(after && poolCount>1){
+    // Cuerpo rígido: conserva la forma exacta (enlaces bien visibles y separados)
+    // pero acerca el centro de la molécula reaccionada a su posición inicial.
+    const shapeScale = SHAPE_SCALE[poolCount] ?? 0.6;
+    const blend = MOVE_BLEND[poolCount] ?? 0.6;
+    const cB = centroidOf(L.before), cA = centroidOf(L.after);
+    const effC = [cB[0]+(cA[0]-cB[0])*blend, cB[1]+(cA[1]-cB[1])*blend];
+    Object.keys(info.pos).forEach(k=>{
+      const ap = L.after[k];
+      const rel = [(ap[0]-cA[0])*shapeScale, (ap[1]-cA[1])*shapeScale];
+      pos[k] = T([effC[0]+rel[0], effC[1]+rel[1]]);
+    });
+  } else {
+    Object.keys(info.pos).forEach(k=> pos[k] = T(info.pos[k]));
+  }
+  const {atoms, labels, bonds} = u;
+  KEYS.forEach(k=>{
+    const has = k!=='B' || info.hasB;
+    const water = (k==='O'||k==='H1'||k==='H2');
+    atoms[k].style.opacity = !has ? 0 : (info.fade && water ? .4 : 1);
+    atoms[k].style.pointerEvents = has ? 'auto' : 'none';
+    atoms[k].setAttribute('fill', atomColorHex(k));
+    labels[k].style.opacity = !has ? 0 : (info.fade && water ? .5 : 1);
+    if(has){
+      place(atoms[k], pos[k]); placeText(labels[k], pos[k]);
+      setSvgFormula(labels[k], info.labels[k]);
+      atoms[k].setAttribute('r', info.radii[k]*sa);
+      labels[k].setAttribute('font-size', BASE_FS[k]*Math.max(sa,.85));
+    }
+  });
+  const map = { OH1:[pos.O,pos.H1], OH2:[pos.O,pos.H2], AB:[pos.A,pos.B], OA:[pos.O,pos.A], H2A:[pos.H2,pos.A] };
+  BOND_KEYS.forEach(k=>{
+    placeBond(bonds[k], map[k][0], map[k][1], info.bonds.includes(k));
+    bonds[k].style.strokeWidth = 3*sa;
+  });
+}
+
+function render(sub, after){
+  const d = DATA[sub];
+  const n = d.strong ? 1 : poolN;
+  if(units.length !== n) buildUnits(n);
+  const cells = cellLayout(n), sc = cellScale(n);
+  units.forEach((u,i)=> renderUnit(u, d, after && (d.strong || reactSet.has(i)), sc.s, sc.sa, cells[i][0], cells[i][1], n));
+}
+
+function applyColors(){
+  units.forEach(u=>{ KEYS.forEach(k=> u.atoms[k].setAttribute('fill', atomColorHex(k))); });
+  if(T3){
+    T3.units.forEach(u=>{
+      KEYS.forEach(k=>{ u.atoms[k].mesh.material.color.setHex(hexToInt(atomColorHex(k))); });
+    });
+  }
+  updateLegend();
+}
+
+/* ============================================================
+   MOTOR 3D
+   ============================================================ */
+let mode3d = false;
+let T3 = null;
+const ZOFF = {H1:.45, H2:-.45};
+const UNIT_ORG = {
+  1:[[0,0,0]],
+  2:[[-3.2,1,.6],[3.2,-1,-.6]],
+  3:[[-3.6,1.2,.8],[3.6,1.2,-.8],[0,-1.6,0]],
+  4:[[-3.8,1.4,-1.2],[3.8,1.4,1.2],[-3.8,-1.4,1.2],[3.8,-1.4,-1.2]],
+  5:[[-4,1.6,-1],[0,1.9,1.4],[4,1.6,-1],[-2.4,-1.7,1.1],[2.4,-1.7,-1.1]]
+};
+const UNIT_SCALE = {1:.7, 2:.5, 3:.46, 4:.42, 5:.38};
+function orgFor(n){ return UNIT_ORG[n] || UNIT_ORG[4]; }
+const BOND_ATOMS = { OH1:['O','H1'], OH2:['O','H2'], AB:['A','B'], OA:['O','A'], H2A:['H2','A'] };
+const clamp = (x,a,b)=> Math.max(a, Math.min(b, x));
+
+const MOL_LEVELS = {
+  1:{r:1.6,  phi:1.35},
+  2:{r:2.4,  phi:1.28},
+  3:{r:3.4,  phi:1.20},
+  4:{r:5.0,  phi:1.15},
+  5:{r:7.2,  phi:1.10}
+};
+
+function init3D(){
+  if(T3) return true;
+  if(typeof THREE === 'undefined') return false;
+  try{
+    const wrap = document.getElementById('threeWrap');
+    const renderer = new THREE.WebGLRenderer({antialias:false, powerPreference:'low-power'});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 1.5));
+    renderer.setClearColor(0x153349, 1);
+    const canvas = renderer.domElement;
+    canvas.className = 'three';
+    wrap.insertBefore(canvas, wrap.firstChild);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+    scene.add(new THREE.AmbientLight(0xffffff, .75));
+    const dl = new THREE.DirectionalLight(0xffffff, .8); dl.position.set(6,10,8); scene.add(dl);
+    const dl2 = new THREE.DirectionalLight(0x88aacc, .4); dl2.position.set(-8,-4,-6); scene.add(dl2);
+
+    const box = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(16,9,9)),
+      new THREE.LineBasicMaterial({color:0x3B6E8F, transparent:true, opacity:.7})
+    );
+    scene.add(box);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(60, 40),
+      new THREE.MeshPhongMaterial({color:0x1b3245, shininess:10, side: THREE.DoubleSide})
+    );
+    floor.rotation.x = -Math.PI/2;
+    floor.position.y = -2.6;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(60, 24, 0x2e5670, 0x1e3d55);
+    grid.position.y = -2.59;
+    scene.add(grid);
+
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(1,16,12), new THREE.MeshBasicMaterial({color:0xF2A65A, transparent:true, opacity:.10, depthWrite:false}));
+    halo.visible = false;
+    scene.add(halo);
+
+    const boltGeo = new THREE.BufferGeometry();
+    boltGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+    const boltMat = new THREE.LineBasicMaterial({color:0xFFF27A, transparent:true, opacity:0});
+    const bolt = new THREE.Line(boltGeo, boltMat);
+    bolt.visible = false;
+    scene.add(bolt);
+
+    const electron = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 10, 8),
+      new THREE.MeshBasicMaterial({color:0xFFF27A, transparent:true, opacity:0})
+    );
+    electron.visible = false;
+    scene.add(electron);
+
+    const body = new THREE.Mesh(
+      new THREE.SphereGeometry(0.42, 14, 10),
+      new THREE.MeshPhongMaterial({color:0x5FC9C0, shininess:60, transparent:true, opacity:.55})
+    );
+    body.visible = false;
+    scene.add(body);
+
+    T3 = {
+      renderer, canvas, scene, camera,
+      sphereGeo: new THREE.SphereGeometry(1, 18, 13),
+      cylGeo: new THREE.CylinderGeometry(1, 1, 1, 8),
+      labelCache: {}, units: [], n: 0, running: false,
+      cam: {theta:.45, phi:1.2, radius:16, tx:0, ty:0, tz:0},
+      player: {x:0, y:1.6, z:7.5, yaw:Math.PI, pitch:-.10, eyeHeight:1.6, groundY:-2.6, vy:0, onGround:true, crouching:false},
+      molPOV: {unit:0, key:'A'},
+      molCam: {theta:0, phi:1.2, radius:3.4, level:3, initialized:false},
+      viewMode:'orbit',
+      raycaster: new THREE.Raycaster(),
+      halo: null, bolt: null, electron: null, body: null,
+      boltActive: false, boltT0: 0,
+      tmpV: new THREE.Vector3(), tmpD: new THREE.Vector3(),
+      yAxis: new THREE.Vector3(0,1,0)
+    };
+    T3.halo = halo;
+    T3.bolt = bolt;
+    T3.electron = electron;
+    T3.body = body;
+    attachControls();
+    resize3D();
+    return true;
+  }catch(err){
+    console.error(err);
+    T3 = null;
+    return false;
+  }
+}
+
+function resetCam(){ if(!T3) return; Object.assign(T3.cam, {theta:.45, phi:1.2, radius:16, tx:0, ty:0, tz:0}); }
+function resetPlayer(){
+  if(!T3) return;
+  Object.assign(T3.player, {x:0, y:-1.0, z:7.5, yaw:Math.PI, pitch:-.10, vy:0, onGround:true, crouching:false, eyeHeight:1.6});
+}
+function resetMolCam(){
+  if(!T3) return;
+  const lvl = MOL_LEVELS[T3.molCam.level] || MOL_LEVELS[3];
+  T3.molCam.radius = lvl.r;
+  T3.molCam.phi = lvl.phi;
+  T3.molCam.initialized = false;
+}
+
+const keyState = {};
+function onKeyDown(e){
+  keyState[e.key.toLowerCase()] = true;
+  if(e.key === ' ' || e.code === 'Space') keyState[' '] = true;
+  if(e.key === 'Shift') keyState['shift'] = true;
+  if((e.key === ' ' || e.key === 'Shift') && T3 && T3.viewMode === 'person'){ e.preventDefault(); }
+}
+function onKeyUp(e){
+  keyState[e.key.toLowerCase()] = false;
+  if(e.key === ' ' || e.code === 'Space') keyState[' '] = false;
+  if(e.key === 'Shift') keyState['shift'] = false;
+}
+function attachKeys(){ window.addEventListener('keydown', onKeyDown); window.addEventListener('keyup', onKeyUp); }
+function detachKeys(){
+  window.removeEventListener('keydown', onKeyDown);
+  window.removeEventListener('keyup', onKeyUp);
+  Object.keys(keyState).forEach(k=> keyState[k]=false);
+}
+
+function updatePersonMovement(){
+  const p = T3.player;
+  const speed = 0.06;
+  const fx = Math.sin(p.yaw), fz = Math.cos(p.yaw);
+  const rx = -Math.cos(p.yaw), rz = Math.sin(p.yaw);
+  let mx=0, mz=0;
+  if(keyState['w']||keyState['arrowup']){ mx+=fx; mz+=fz; }
+  if(keyState['s']||keyState['arrowdown']){ mx-=fx; mz-=fz; }
+  if(keyState['a']){ mx-=rx; mz-=rz; }
+  if(keyState['d']){ mx+=rx; mz+=rz; }
+  const len = Math.hypot(mx,mz);
+  if(len>0){ p.x += (mx/len)*speed; p.z += (mz/len)*speed; }
+  if(keyState['arrowleft'])  p.yaw += 0.030;
+  if(keyState['arrowright']) p.yaw -= 0.030;
+  p.x = clamp(p.x, -12, 12);
+  p.z = clamp(p.z, -8, 8);
+  p.crouching = !!(keyState['shift']);
+  p.eyeHeight = p.crouching ? 1.0 : 1.6;
+  if(keyState[' '] && p.onGround){ p.vy = 0.28; p.onGround = false; }
+  p.vy -= 0.022;
+  p.y += p.vy;
+  const eyeTarget = p.groundY + p.eyeHeight;
+  if(p.y <= eyeTarget){ p.y = eyeTarget; p.vy = 0; p.onGround = true; }
+}
+
+function povOptions(d){
+  if(d.mech==='acid') return [{key:'A', label:'H⁺ que se va'}, {key:'O', label:'agua que lo recibe'}];
+  if(d.mech==='ionicBase') return [{key:'A', label:'catión'}, {key:'B', label:'anión'}];
+  return [{key:'H2', label:'H que viaja'}, {key:'A', label:'base que lo incorpora'}];
+}
+
+function updateViewerBadge(){
+  if(!T3 || T3.viewMode !== 'molecule'){ document.getElementById('viewerBadge').textContent = ''; return; }
+  const d = DATA[substanceSel.value];
+  const opts = povOptions(d);
+  const cur = opts.find(o => o.key === T3.molPOV.key);
+  document.getElementById('viewerBadge').innerHTML =
+    `Perspectiva: ${cur ? cur.label : ''} · molécula ${d.nameHTML}`;
+}
+
+function setupMoleculePOV(keepState){
+  const d = DATA[substanceSel.value];
+  const unit = d.strong ? 0 : (reactSet.size ? [...reactSet][0] : 0);
+  const opts = povOptions(d);
+  const prevKey = T3.molPOV ? T3.molPOV.key : null;
+  const prevTheta = T3.molCam.theta;
+  const prevInit = T3.molCam.initialized;
+  let newKey = opts[0].key;
+  if(keepState && prevKey && opts.some(o => o.key === prevKey)) newKey = prevKey;
+  T3.molPOV = {unit, key: newKey};
+  if(keepState){ T3.molCam.theta = prevTheta; T3.molCam.initialized = prevInit; }
+  else { T3.molCam.initialized = false; }
+
+  const pov = document.getElementById('povSwitch');
+  pov.innerHTML = '';
+  opts.forEach((o,i)=>{
+    const b = document.createElement('button');
+    b.type='button'; b.textContent='Desde el ' + o.label;
+    b.className = (o.key === newKey) ? '' : 'ghost';
+    b.addEventListener('click', ()=>{
+      T3.molPOV.key = o.key;
+      T3.molCam.initialized = false;
+      [...pov.children].forEach((c,j)=> c.className = j===i ? '' : 'ghost');
+      updateViewerBadge();
+    });
+    pov.appendChild(b);
+  });
+  updateViewerBadge();
+}
+
+function setupLevelsBtns(){
+  const cont = document.getElementById('lvlBtns');
+  if(cont.children.length){
+    [...cont.children].forEach(b => b.classList.toggle('on', parseInt(b.dataset.lvl,10)===T3.molCam.level));
+    return;
+  }
+  cont.innerHTML = '';
+  [1,2,3,4,5].forEach(lvl=>{
+    const b = document.createElement('button');
+    b.type='button'; b.textContent=lvl; b.dataset.lvl=lvl;
+    b.className = lvl===T3.molCam.level ? 'on' : '';
+    b.addEventListener('click', ()=>{
+      T3.molCam.level = lvl;
+      const cfg = MOL_LEVELS[lvl];
+      T3.molCam.radius = cfg.r;
+      T3.molCam.phi = cfg.phi;
+      [...cont.children].forEach(c => c.classList.toggle('on', parseInt(c.dataset.lvl,10)===lvl));
+    });
+    cont.appendChild(b);
+  });
+}
+
+function updateMoleculeCam(){
+  const u = T3.units[T3.molPOV.unit];
+  if(!u) return;
+  const a = u.atoms[T3.molPOV.key];
+  if(!a) return;
+  a.mesh.visible = a.op > 0.02;
+  a.sprite.visible = a.op > 0.02;
+
+  const center = T3.tmpV.set(0,0,0);
+  let cnt = 0;
+  KEYS.forEach(k=>{
+    if(k===T3.molPOV.key) return;
+    const b = u.atoms[k];
+    if(b.op>0.05){ center.add(b.cur); cnt++; }
+  });
+  if(cnt>0) center.multiplyScalar(1/cnt);
+  else center.copy(a.cur).add(T3.yAxis);
+
+  if(!T3.molCam.initialized){
+    const dx = a.cur.x - center.x;
+    const dz = a.cur.z - center.z;
+    T3.molCam.theta = Math.atan2(dx, dz);
+    T3.molCam.initialized = true;
+  }
+
+  const r = T3.molCam.radius;
+  const theta = T3.molCam.theta;
+  const phi = T3.molCam.phi;
+  const camX = a.cur.x + Math.sin(theta)*Math.sin(phi)*r;
+  const camY = a.cur.y + Math.cos(phi)*r;
+  const camZ = a.cur.z + Math.cos(theta)*Math.sin(phi)*r;
+  T3.camera.position.set(camX, camY, camZ);
+  T3.camera.lookAt(a.cur.x, a.cur.y, a.cur.z);
+
+  if(T3.body){
+    T3.body.visible = true;
+    T3.body.position.copy(a.cur);
+    T3.body.scale.setScalar(1.25);
+    T3.body.material.color.setHex(hexToInt(atomColorHex(T3.molPOV.key)));
+    const pulse = 1 + 0.06*Math.sin(performance.now()*0.005);
+    T3.body.scale.multiplyScalar(pulse);
+    T3.body.material.opacity = 0.35;
+  }
+
+  a.sprite.material.depthTest = false;
+  a.sprite.material.depthWrite = false;
+  a.sprite.renderOrder = 999;
+  const base = a.sprite.scale.clone().multiplyScalar(2.2);
+  a.sprite.scale.copy(base);
+  a.sprite.material.opacity = 1;
+
+  KEYS.forEach(k=>{
+    if(k===T3.molPOV.key) return;
+    const b = u.atoms[k];
+    b.sprite.renderOrder = 0;
+    b.sprite.material.depthTest = true;
+  });
+}
+
+function restoreAllSprites(){
+  if(!T3) return;
+  T3.units.forEach(u => KEYS.forEach(k=>{
+    const b = u.atoms[k];
+    b.sprite.renderOrder = 0;
+    b.sprite.material.depthTest = true;
+    b.sprite.material.depthWrite = false;
+  }));
+}
+
+function attachControls(){
+  const c = T3.canvas, cam = T3.cam;
+  const pts = new Map();
+  let lastDist = 0, lastMid = null;
+  function pan(dx, dy){
+    const k = cam.radius*0.0016;
+    cam.tx -= dx*k*Math.cos(cam.theta);
+    cam.tz += dx*k*Math.sin(cam.theta);
+    cam.ty += dy*k;
+  }
+  c.addEventListener('contextmenu', e=> e.preventDefault());
+  c.addEventListener('pointerdown', e=>{
+    try{ c.setPointerCapture(e.pointerId); }catch(_){}
+    pts.set(e.pointerId, {x:e.clientX, y:e.clientY, sx:e.clientX, sy:e.clientY, t:performance.now(), button:e.button});
+    c.style.cursor = 'grabbing';
+    if(pts.size===2){
+      const [a,b] = [...pts.values()];
+      lastDist = Math.hypot(a.x-b.x, a.y-b.y) || 1;
+      lastMid = {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+    }
+  });
+  c.addEventListener('pointermove', e=>{
+    const p = pts.get(e.pointerId);
+    if(!p) return;
+    const dx = e.clientX-p.x, dy = e.clientY-p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if(T3.viewMode==='person'){
+      if(pts.size===1){
+        T3.player.yaw -= dx*0.006;
+        T3.player.pitch = clamp(T3.player.pitch - dy*0.006, -1.3, 1.3);
+      }
+      return;
+    }
+    if(T3.viewMode==='molecule'){
+      if(pts.size===1){
+        T3.molCam.theta -= dx*0.008;
+        T3.molCam.phi = clamp(T3.molCam.phi + dy*0.006, 0.15, Math.PI-0.15);
+      } else if(pts.size===2){
+        const [a,b] = [...pts.values()];
+        const dist = Math.hypot(a.x-b.x, a.y-b.y) || 1;
+        T3.molCam.radius = clamp(T3.molCam.radius * lastDist/dist, 1.2, 20);
+        lastDist = dist;
+      }
+      return;
+    }
+    if(pts.size===1){
+      if(p.button===2 || e.shiftKey) pan(dx,dy);
+      else { cam.theta -= dx*0.008; cam.phi = clamp(cam.phi - dy*0.008, 0.15, Math.PI-0.15); }
+    } else if(pts.size===2){
+      const [a,b] = [...pts.values()];
+      const dist = Math.hypot(a.x-b.x, a.y-b.y) || 1;
+      cam.radius = clamp(cam.radius*lastDist/dist, 4, 40);
+      lastDist = dist;
+      const mid = {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+      if(lastMid) pan(mid.x-lastMid.x, mid.y-lastMid.y);
+      lastMid = mid;
+    }
+  });
+  const end = e=>{
+    const p = pts.get(e.pointerId);
+    if(p && e.type==='pointerup' && pts.size===1 && p.button===0 && Math.hypot(e.clientX-p.sx, e.clientY-p.sy)<6 && performance.now()-p.t<700) pick3D(e);
+    pts.delete(e.pointerId); if(pts.size<2) lastMid = null; if(pts.size===0) c.style.cursor = 'grab';
+  };
+  c.addEventListener('pointerup', end);
+  c.addEventListener('pointercancel', end);
+  c.addEventListener('wheel', e=>{
+    e.preventDefault();
+    if(T3.viewMode==='orbit'){ cam.radius = clamp(cam.radius*(1+e.deltaY*0.001), 4, 40); }
+    else if(T3.viewMode==='molecule'){ T3.molCam.radius = clamp(T3.molCam.radius*(1+e.deltaY*0.001), 1.2, 20); }
+  }, {passive:false});
+}
+
+function resize3D(){
+  if(!T3) return;
+  const w = T3.canvas.parentElement.clientWidth, h = T3.canvas.parentElement.clientHeight;
+  if(!w || !h) return;
+  T3.renderer.setSize(w, h, false);
+  T3.camera.aspect = w/h;
+  T3.camera.updateProjectionMatrix();
+}
+
+function labelTex(str){
+  if(T3.labelCache[str]) return T3.labelCache[str];
+  const cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 128;
+  const ctx = cv.getContext('2d');
+  const big = 64, small = 40;
+  let total = 0;
+  const parts = parseFormula(str).map(([t,ty])=>{
+    const txt = ty==='p' ? t.replace('-','−') : t;
+    ctx.font = `700 ${ty==='n'?big:small}px Inter, Arial, sans-serif`;
+    const w = ctx.measureText(txt).width;
+    total += w;
+    return {txt, ty, w};
+  });
+  const f = Math.min(1, 236/total);
+  ctx.translate(128,64); ctx.scale(f,f); ctx.translate(-128,-64);
+  ctx.fillStyle = '#0B1520';
+  ctx.textBaseline = 'alphabetic';
+  let x = (256-total)/2;
+  parts.forEach(p=>{
+    ctx.font = `700 ${p.ty==='n'?big:small}px Inter, Arial, sans-serif`;
+    const y = p.ty==='s' ? 98 : p.ty==='p' ? 60 : 84;
+    ctx.fillText(p.txt, x, y);
+    x += p.w;
+  });
+  const tex = new THREE.CanvasTexture(cv);
+  return (T3.labelCache[str] = {tex, total: total*f});
+}
+
+function build3DUnits(n){
+  T3.units.forEach(u=>{
+    KEYS.forEach(k=>{
+      T3.scene.remove(u.atoms[k].mesh); T3.scene.remove(u.atoms[k].sprite);
+      u.atoms[k].mesh.material.dispose();
+      u.atoms[k].sprite.material.dispose();
+    });
+    BOND_KEYS.forEach(k=>{ T3.scene.remove(u.bonds[k].mesh); u.bonds[k].mesh.material.dispose(); });
+  });
+  T3.units = [];
+  for(let i=0;i<n;i++){
+    const atoms = {}, bonds = {};
+    KEYS.forEach(k=>{
+      const mesh = new THREE.Mesh(T3.sphereGeo, new THREE.MeshPhongMaterial({color:hexToInt(atomColorHex(k)), shininess:70, transparent:true}));
+      T3.scene.add(mesh);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({transparent:true, depthTest:true, depthWrite:false}));
+      T3.scene.add(sprite);
+      atoms[k] = {flash:-1e9, mesh, sprite, from:new THREE.Vector3(), to:new THREE.Vector3(), cur:new THREE.Vector3(), r:.5, label:'', op:1, opTarget:1, t0:0, fresh:true};
+    });
+    BOND_KEYS.forEach(k=>{
+      const mesh = new THREE.Mesh(T3.cylGeo, new THREE.MeshPhongMaterial({color:0xD5DEE5, transparent:true, opacity:0}));
+      mesh.visible = false;
+      T3.scene.add(mesh);
+      bonds[k] = {mesh, op:0, opTarget:0, a:null, b:null};
+    });
+    T3.units.push({atoms, bonds, s:1});
+  }
+  T3.n = n;
+  resetCam();
+}
+
+function sync3D(sub, after){
+  if(!T3) return;
+  const d = DATA[sub];
+  const n = d.strong ? 1 : poolN;
+  if(T3.n !== n) build3DUnits(n);
+  const now = performance.now();
+  const orgList = orgFor(n);
+  const sBase = UNIT_SCALE[n] ?? .6;
+  T3.units.forEach((u,i)=>{
+    const isAfter = after && (d.strong || reactSet.has(i));
+    const info = describeUnit(d, isAfter);
+    const L = LAYOUT[d.mech];
+    const s = sBase;
+    const org = orgList[i] || [0,0,0];
+    u.s = s;
+    let effC = null, cA3 = null, shapeScale3 = 1;
+    if(isAfter && n>1){
+      shapeScale3 = SHAPE_SCALE[n] ?? 0.6;
+      const blend3 = MOVE_BLEND[n] ?? 0.6;
+      const cB3 = centroidOf(L.before);
+      cA3 = centroidOf(L.after);
+      effC = [cB3[0]+(cA3[0]-cB3[0])*blend3, cB3[1]+(cA3[1]-cB3[1])*blend3];
+    }
+    KEYS.forEach(k=>{
+      const a = u.atoms[k];
+      const has = (k!=='B' || info.hasB) && info.pos[k];
+      if(has){
+        let p = info.pos[k];
+        if(effC){
+          const ap = L.after[k];
+          const rel = [(ap[0]-cA3[0])*shapeScale3, (ap[1]-cA3[1])*shapeScale3];
+          p = [effC[0]+rel[0], effC[1]+rel[1]];
+        }
+        const dx = (p[0]-300)/40*s, dy = -(p[1]-160)/40*s;
+        let z = ZOFF[k] || 0;
+        if(d.mech==='protonBase' && isAfter && k==='H2') z = .3;
+        a.to.set(org[0]+dx, org[1]+dy, org[2]+z*s);
+        a.r = info.radii[k]/30*s;
+        const texInfo = labelTex(info.labels[k]);
+        if(a.label !== info.labels[k]){
+          a.sprite.material.map = texInfo.tex;
+          a.sprite.material.needsUpdate = true;
+          a.label = info.labels[k];
+        }
+        const fit = Math.min(1, (1.75*a.r)/(texInfo.total*0.009));
+        a.sprite.scale.set(2.304*fit, 1.152*fit, 1);
+      }
+      const water = (k==='O'||k==='H1'||k==='H2');
+      a.opTarget = has ? (info.fade && water ? .4 : 1) : 0;
+      if(a.fresh){ a.cur.copy(a.to); a.from.copy(a.to); a.op = a.opTarget; a.fresh = false; }
+      else { a.from.copy(a.cur); a.t0 = now; }
+    });
+    BOND_KEYS.forEach(k=>{
+      const b = u.bonds[k];
+      b.a = u.atoms[BOND_ATOMS[k][0]];
+      b.b = u.atoms[BOND_ATOMS[k][1]];
+      b.opTarget = info.bonds.includes(k) ? 1 : 0;
+    });
+  });
+}
+
+function updateElectronSteal(now){
+  if(!T3 || !T3.bolt) return;
+  const active = mode3d && dissolved && T3.viewMode==='molecule' && T3.boltActive;
+  if(!active){ T3.bolt.visible = false; T3.electron.visible = false; return; }
+  const d = DATA[substanceSel.value];
+  const u = T3.units[T3.molPOV.unit];
+  if(!u) return;
+
+  let fromKey, toKey;
+  if(d.mech==='acid'){ fromKey='H2'; toKey='O'; }
+  else if(d.mech==='protonBase'){ fromKey='H2'; toKey='A'; }
+  else { fromKey='B'; toKey='A'; }
+
+  const A = u.atoms[fromKey], B = u.atoms[toKey];
+  if(!A || !B) return;
+
+  const elapsed = (now - T3.boltT0)/1000;
+  const dur = 1.4;
+  const t = clamp(elapsed/dur, 0, 1);
+  const e = 1 - Math.pow(1-t, 3);
+
+  T3.electron.position.lerpVectors(A.cur, B.cur, e);
+  T3.electron.material.opacity = 1 - Math.max(0, (t-0.85)/0.15);
+  T3.electron.visible = T3.electron.material.opacity > 0.02;
+  const pulse = 1 + 0.4*Math.sin(now*0.02);
+  T3.electron.scale.setScalar(pulse);
+
+  const posAttr = T3.bolt.geometry.attributes.position;
+  const midX = (A.cur.x + B.cur.x)/2 + (Math.random()-0.5)*0.15;
+  const midY = (A.cur.y + B.cur.y)/2 + (Math.random()-0.5)*0.15;
+  const midZ = (A.cur.z + B.cur.z)/2 + (Math.random()-0.5)*0.15;
+  posAttr.setXYZ(0, A.cur.x, A.cur.y, A.cur.z);
+  posAttr.setXYZ(1, midX, midY, midZ);
+  posAttr.needsUpdate = true;
+
+  T3.bolt.material.opacity = (1 - Math.max(0, (t-0.85)/0.15)) * 0.9;
+  T3.bolt.visible = T3.bolt.material.opacity > 0.02;
+
+  if(t >= 1){ T3.boltActive = false; }
+}
+
+function tick3D(now){
+  if(!mode3d || !T3){ if(T3) T3.running = false; return; }
+  requestAnimationFrame(tick3D);
+  const {tmpV, tmpD, yAxis} = T3;
+  T3.units.forEach(u=>{
+    KEYS.forEach(k=>{
+      const a = u.atoms[k];
+      const t = Math.min(1, (now-a.t0)/1700);
+      const e = 1 - Math.pow(1-t, 3);
+      a.cur.lerpVectors(a.from, a.to, e);
+      a.op += (a.opTarget - a.op)*0.15;
+      const vis = a.op > 0.02;
+      a.mesh.visible = vis; a.sprite.visible = vis;
+      a.mesh.position.copy(a.cur);
+      a.mesh.scale.setScalar(a.r);
+      a.mesh.material.opacity = a.op;
+      tmpV.subVectors(T3.camera.position, a.cur).normalize();
+      a.sprite.position.copy(a.cur).addScaledVector(tmpV, a.r*1.04);
+      a.sprite.material.opacity = a.op;
+      const fl = Math.max(0, 1-(now-a.flash)/900);
+      a.mesh.material.emissive.setRGB(.45*fl, .45*fl, .45*fl);
+    });
+    BOND_KEYS.forEach(k=>{
+      const b = u.bonds[k];
+      b.op += (b.opTarget - b.op)*0.15;
+      if(!b.a || !b.b || b.op < 0.02){ b.mesh.visible = false; return; }
+      tmpD.subVectors(b.b.cur, b.a.cur);
+      const len = tmpD.length();
+      if(len < 1e-4){ b.mesh.visible = false; return; }
+      b.mesh.visible = true;
+      b.mesh.position.copy(b.a.cur).addScaledVector(tmpD, .5);
+      tmpV.copy(tmpD).normalize();
+      b.mesh.quaternion.setFromUnitVectors(yAxis, tmpV);
+      const rad = 0.09*Math.max(u.s, .7);
+      b.mesh.scale.set(rad, len, rad);
+      b.mesh.material.opacity = b.op*Math.min(b.a.op, b.b.op);
+    });
+  });
+
+  if(T3.viewMode==='person'){
+    updatePersonMovement();
+    const p = T3.player;
+    T3.camera.position.set(p.x, p.y, p.z);
+    const dx = Math.cos(p.pitch)*Math.sin(p.yaw), dy = Math.sin(p.pitch), dz = Math.cos(p.pitch)*Math.cos(p.yaw);
+    T3.camera.lookAt(p.x+dx, p.y+dy, p.z+dz);
+    if(T3.body) T3.body.visible = false;
+    if(T3.bolt) T3.bolt.visible = false;
+    if(T3.electron) T3.electron.visible = false;
+    restoreAllSprites();
+  } else if(T3.viewMode==='molecule'){
+    updateMoleculeCam();
+    updateElectronSteal(now);
+  } else {
+    if(T3.body) T3.body.visible = false;
+    const c = T3.cam, sp = Math.sin(c.phi);
+    T3.camera.position.set(c.tx + c.radius*sp*Math.sin(c.theta), c.ty + c.radius*Math.cos(c.phi), c.tz + c.radius*sp*Math.cos(c.theta));
+    T3.camera.lookAt(c.tx, c.ty, c.tz);
+    if(T3.bolt) T3.bolt.visible = false;
+    if(T3.electron) T3.electron.visible = false;
+    restoreAllSprites();
+  }
+  if(now - (T3.lastRender||0) >= 32){ // limita el render a ~30fps para consumir menos GPU
+    T3.renderer.render(T3.scene, T3.camera);
+    T3.lastRender = now;
+  }
+}
+
+function enter3D(viewMode){
+  if(!init3D()){
+    caption.textContent = 'No se pudo iniciar el modo 3D: hace falta conexión a internet (para cargar three.js) y un navegador con WebGL.';
+    return;
+  }
+  const field = document.getElementById('molField');
+  const btn = document.getElementById('btn3d');
+  mode3d = true;
+  T3.viewMode = viewMode;
+  field.classList.add('is3d');
+  btn.classList.add('on');
+  btn.textContent = 'Salir del 3D';
+  resize3D();
+  sync3D(substanceSel.value, dissolved);
+  applyColors();
+
+  const hud = document.getElementById('modeHud');
+  const hint = document.getElementById('hudHint');
+  const pov = document.getElementById('povSwitch');
+  const lvls = document.getElementById('molLevels');
+  const badge = document.getElementById('viewerBadge');
+  hud.style.display = 'flex';
+  pov.style.display = 'none';
+  pov.innerHTML = '';
+  lvls.classList.remove('on');
+  badge.textContent = '';
+
+  if(viewMode==='orbit'){
+    resetCam();
+    restoreAllSprites();
+    hint.textContent = 'Arrastrá para girar · rueda o pellizco para acercar · clic derecho o Shift+arrastrar para mover · tocá una molécula para ver qué pasó';
+  } else if(viewMode==='person'){
+    resetPlayer();
+    attachKeys();
+    hint.innerHTML = 'W A S D para moverse · flechas ← → para girar · arrastrá con el mouse para mirar · <b>Espacio</b> para saltar · <b>Shift</b> para agacharse';
+  } else {
+    pov.style.display = 'flex';
+    lvls.classList.add('on');
+    setupMoleculePOV(false);
+    setupLevelsBtns();
+    resetMolCam();
+    hint.textContent = 'Tercera persona desde la molécula · arrastrá para orbitar la cámara · rueda o pellizco para acercar · niveles 1–5 · mirá cómo el agua le roba el H con un rayo';
+  }
+  if(!T3.running){ T3.running = true; requestAnimationFrame(tick3D); }
+}
+
+function exit3D(){
+  if(!mode3d) return;
+  mode3d = false;
+  if(T3){
+    T3.viewMode = null;
+    if(T3.bolt) T3.bolt.visible = false;
+    if(T3.electron) T3.electron.visible = false;
+    if(T3.body) T3.body.visible = false;
+    restoreAllSprites();
+  }
+  detachKeys();
+  document.getElementById('molField').classList.remove('is3d');
+  document.getElementById('btn3d').classList.remove('on');
+  document.getElementById('btn3d').innerHTML = 'Plano 3D <small>(Fase de prueba)</small>';
+  document.getElementById('modeHud').style.display = 'none';
+  document.getElementById('modeMenu').classList.remove('show');
+  document.getElementById('presenceMenu').classList.remove('show');
+  document.getElementById('molLevels').classList.remove('on');
+  document.getElementById('viewerBadge').textContent = '';
+}
+
+/* ============================================================
+   EXPLICACIONES
+   ============================================================ */
+let sel = null;
+let lastPct = 100;
+
+function unitReacted(unit){
+  const d = DATA[substanceSel.value];
+  return dissolved && (d.strong || reactSet.has(unit));
+}
+
+function setExplain(pill, cls, title, html){
+  const p = document.getElementById('exPill');
+  p.textContent = pill;
+  p.className = 'pill ' + cls;
+  document.getElementById('exTitle').innerHTML = title;
+  caption.innerHTML = html;
+}
+
+function explanation(d, key, after, reacted){
+  const ions = cationAnionHTML(d);
+  const water = (key==='O' || key==='H1' || key==='H2');
+  const pct = fmt(lastPct, lastPct<10 ? 1 : 0);
+  const K = d.mech==='acid' ? (d.Ka ? `Ka = ${d.Ka.toExponential(1)}` : '') : (d.Kb ? `Kb = ${d.Kb.toExponential(1)}` : '');
+  const note = `En este dibujo elegiste mostrar ${poolN} moléculas y reaccionaron ${reactSet.size}; con esta concentración, en la realidad reacciona ≈${pct}% de todas las moléculas.`;
+  const fragH = d.frag ? htmlFormula(d.frag) : '';
+  const nm = d.nameHTML;
+  const titleMol = `${d.art} ${d.full} todavía no ha reaccionado`;
+
+  if(!after){
+    if(water) return {pill:'Sin reaccionar', cls:'wait', title:'Una molécula de agua',
+      html:`Es una molécula de H<sub>2</sub>O intacta: conserva sus dos H. ${d.mech==='ionicBase' ? 'En las bases fuertes el agua solo va a hacer de solvente.' : 'Va a participar de la reacción.'} Apretá <b>Disolver en agua</b> para verlo.`};
+    let html;
+    if(d.mech==='acid') html = `El H sigue unido al ${fragH}: el enlace H–${fragH} está entero. La molécula de agua está cerca, pero todavía no le sacó el H.`;
+    else if(d.mech==='ionicBase') html = `El ${ions.cat} y el OH siguen unidos por enlace iónico (todavía es el sólido). El agua no los separó.`;
+    else html = `La molécula de ${nm} está entera: todavía no le quitó ningún H al agua.`;
+    return {pill:'Sin reaccionar', cls:'wait', title:titleMol, html: html + ' Apretá <b>Disolver en agua</b> para ver qué pasa.'};
+  }
+
+  if(reacted){
+    if(d.mech==='acid'){
+      if(key==='B') return {pill:'Aquí reaccionó', cls:'ok', title:`Quedó el ${ions.an}`,
+        html:`Este es el resto de la molécula: al romperse el enlace se quedó con los dos electrones que compartía con el H, por eso quedó con carga negativa (${ions.an}).`};
+      return {pill:'Aquí reaccionó', cls:'ok', title:'Se formó H<sub>3</sub>O<sup>+</sup> (ion hidronio)',
+        html:`El oxígeno del agua usó un par de electrones libres para capturar el H del ${nm}: se rompió el enlace H–${fragH} y se formó un enlace nuevo O–H. Al ganar un H<sup>+</sup>, el agua quedó con carga positiva. ` +
+          (d.strong ? `En un ácido fuerte esto le pasa a prácticamente todas las moléculas (100%), por eso la flecha es →.`
+                    : `Como es un ácido débil (${K}), el ${ions.an} tiende a volver a agarrar el H y la reacción es reversible (⇌). ${note}`)};
+    }
+    if(d.mech==='ionicBase'){
+      if(water) return {pill:'No reaccionó', cls:'no', title:'El agua no reaccionó',
+        html:`Esta molécula de agua no cambió: no perdió ni ganó ningún átomo. Solo hizo de solvente: rodea a los iones (hidratación) y los mantiene separados. Las bases fuertes como ${nm} no reaccionan con el agua, simplemente se disocian en ella.`};
+      return {pill:'Aquí reaccionó', cls:'ok', title:'El enlace iónico se rompió',
+        html:`Las moléculas de agua son polares: su lado del O (parcialmente negativo) rodea al ${ions.cat} y su lado del H (parcialmente positivo) rodea al OH<sup>−</sup>. Esa atracción vence al enlace iónico y los iones quedan separados e hidratados. Es una base fuerte: se separa el 100%.` +
+          (d.n>1 ? ` El Ca(OH)<sub>2</sub> libera 2 OH<sup>−</sup> por cada Ca<sup>2+</sup>; en el dibujo mostramos solo uno para simplificar.` : '')};
+    }
+    if(water) return {pill:'Aquí reaccionó', cls:'ok', title:'Se formó OH<sup>−</sup>',
+      html:`Esto es lo que quedó de la molécula de agua después de cederle un H<sup>+</sup> a la base. El OH<sup>−</sup> es el que vuelve básica la solución (sube el pH).`};
+    return {pill:'Aquí reaccionó', cls:'ok', title:`Se formó ${ions.cat}`,
+      html:`La base ${nm} tiene un par de electrones libres: con él le arrancó un H a una molécula de agua y quedó como ${ions.cat}. ${note}`};
+  }
+
+  if(water) return {pill:'No reaccionó', cls:'no', title:'Esta molécula de agua no reaccionó',
+    html: d.mech==='acid'
+      ? `No recibió ningún H: el ${nm} de al lado se quedó con el suyo, así que el agua sigue siendo H<sub>2</sub>O.`
+      : `Conservó sus dos H: la base de al lado no se lo quitó, así que sigue siendo H<sub>2</sub>O.`};
+  if(d.mech==='acid') return {pill:'No reaccionó', cls:'no', title:`Esta molécula de ${nm} no reaccionó`,
+    html:`El H sigue unido al ${fragH}. En un ácido débil ese enlace se rompe con dificultad (${K}) y el agua casi nunca logra arrancarlo: en cada momento solo ≈${pct}% de las moléculas está reaccionada. Además la reacción es reversible: mientras unas se disocian, otras vuelven a formar ${nm}, así que siempre queda ácido sin disociar en el agua. Por eso el pH de un ácido débil es más alto que el de uno fuerte de igual concentración.`};
+  return {pill:'No reaccionó', cls:'no', title:`Esta molécula de ${nm} no reaccionó`,
+    html:`El agua vecina no le cedió ningún H. Una base débil tiene poca tendencia a quitarle H al agua (${K}) y la reacción es reversible: en cada momento solo ≈${pct}% de las moléculas está convertida en ${ions.cat}. El resto sigue como ${nm} en el agua. Por eso el pH de una base débil es más bajo que el de una fuerte de igual concentración.`};
+}
+
+function showExplain(){
+  const d = DATA[substanceSel.value];
+  if(!sel){
+    if(!dissolved){
+      setExplain('Sin reaccionar','wait', `${d.art} ${d.full} todavía no ha reaccionado`,
+        `Apretá <b>Disolver en agua</b> para ver qué pasa. Después podés tocar cualquier molécula para ver qué le ocurrió.`);
+    } else {
+      setExplain('Reaccionó','ok', d.strong ? `${d.art} ${d.full} reaccionó por completo` : `${d.art} ${d.full} reaccionó solo en parte`,
+        d.strong ? `Tocá las moléculas del dibujo para ver qué pasó con cada una.`
+                 : `De las ${poolN} moléculas, ${reactSet.size} reaccionaron. Tocá una que reaccionó y otra que no para comparar por qué.`);
+    }
+    return;
+  }
+  const ex = explanation(d, sel.key, dissolved, unitReacted(sel.unit));
+  setExplain(ex.pill, ex.cls, ex.title, ex.html);
+}
+
+function applyHighlight(){
+  units.forEach((u,i)=>{
+    const on = sel && sel.unit===i;
+    KEYS.forEach(k=>{
+      u.atoms[k].setAttribute('stroke', on ? '#FFFFFF' : 'rgba(11,21,32,.6)');
+      u.atoms[k].setAttribute('stroke-width', on ? '2.6' : '1.5');
+    });
+  });
+  if(T3){
+    const h = T3.halo;
+    if(sel && T3.n>1){
+      const o = orgFor(T3.n)[sel.unit];
+      h.position.set(o[0], o[1], o[2]);
+      h.scale.set(3.9, 2.0, 1.9);
+      h.material.color.setHex(unitReacted(sel.unit) ? 0xF2A65A : 0x5FC9C0);
+      h.visible = true;
+    } else h.visible = false;
+    if(sel && T3.units[sel.unit]) T3.units[sel.unit].atoms[sel.key].flash = performance.now();
+  }
+}
+
+function pickAtom(unit, key){ sel = {unit, key}; showExplain(); applyHighlight(); }
+function clearPick(){ sel = null; showExplain(); applyHighlight(); }
+
+function pick3D(e){
+  if(!T3) return;
+  const rect = T3.canvas.getBoundingClientRect();
+  const nx = ((e.clientX-rect.left)/rect.width)*2 - 1;
+  const ny = -((e.clientY-rect.top)/rect.height)*2 + 1;
+  T3.raycaster.setFromCamera({x:nx, y:ny}, T3.camera);
+  const list = [];
+  T3.units.forEach((u,i)=> KEYS.forEach(k=>{
+    const a = u.atoms[k];
+    if(a.mesh.visible && a.op>.2){ a.mesh.userData = {unit:i, key:k}; list.push(a.mesh); }
+  }));
+  const hit = T3.raycaster.intersectObjects(list, false)[0];
+  if(hit) pickAtom(hit.object.userData.unit, hit.object.userData.key);
+  else clearPick();
+}
+
+document.getElementById('svgField').addEventListener('click', e=>{
+  const t = e.target;
+  if(t && t.dataset && t.dataset.key!==undefined) pickAtom(parseInt(t.dataset.unit,10), t.dataset.key);
+  else clearPick();
+});
+
+/* ============================================================
+   UI
+   ============================================================ */
+const substanceSel = document.getElementById('substance');
+const concSlider = document.getElementById('conc');
+const concVal = document.getElementById('concVal');
+const eqBox = document.getElementById('eqBox');
+const mathBox = document.getElementById('mathBox');
+const phVal = document.getElementById('phVal');
+const phLabel = document.getElementById('phLabel');
+const legendRow = document.getElementById('legendRow');
+const caption = document.getElementById('caption');
+const toggleBtn = document.getElementById('toggleBtn');
+const stateLabel = document.getElementById('stateLabel');
+const stateSub = document.getElementById('stateSub');
+
+let dissolved = false;
+function fmt(x, dd=2){ return x.toLocaleString('es-AR', {minimumFractionDigits:dd, maximumFractionDigits:dd}); }
+
+function cationAnionHTML(d){
+  if(d.mech==='acid') return { cat:'H<sub>3</sub>O<sup>+</sup>', an: htmlFormula(d.frag+'-') };
+  if(d.mech==='ionicBase') return { cat: htmlFormula((d.metal==='Ca2'?'Ca^2+':d.metal.replace('2','')+'+')), an:'OH<sup>−</sup>' };
+  return { cat: htmlFormula(d.product), an:'OH<sup>−</sup>' };
+}
+function scaleLabels(d){
+  if(d.mech==='acid') return { water:'H<sub>2</sub>O (agua)', cation:'H<sup>+</sup>', anion: htmlFormula(d.frag+'-') };
+  const ions = cationAnionHTML(d);
+  return { water:'H<sub>2</sub>O (agua)', cation: ions.cat, anion: ions.an };
+}
+function eqHTML(sub){
+  const d = DATA[sub];
+  const arrow = d.strong ? '→' : '⇌';
+  const ions = cationAnionHTML(d);
+  if(d.mech==='acid') return `${d.nameHTML} + H<sub>2</sub>O <span class="arrow">${arrow}</span> ${ions.cat} + ${ions.an}`;
+  if(d.mech==='ionicBase') return `${d.nameHTML} <span class="arrow">${arrow}</span> ${ions.cat} + ${d.n>1?'2 ':''}${ions.an}`;
+  return `${d.nameHTML} + H<sub>2</sub>O <span class="arrow">${arrow}</span> ${ions.cat} + OH<sup>−</sup>`;
+}
+
+function buildColorScale(){
+  const d = DATA[substanceSel.value];
+  const labels = scaleLabels(d);
+  const cont = document.getElementById('colorScale');
+  cont.innerHTML = '';
+  const items = [
+    {key:'water',  label: labels.water,  color: groupColors.water},
+    {key:'cation', label: labels.cation, color: groupColors.cation},
+    {key:'anion',  label: labels.anion,  color: groupColors.anion}
+  ];
+  items.forEach(it=>{
+    const row = document.createElement('div');
+    row.className = 'color-row';
+    const inp = document.createElement('input');
+    inp.type = 'color'; inp.className = 'swatch'; inp.value = it.color;
+    inp.addEventListener('input', ()=>{ groupColors[it.key] = inp.value; applyColors(); updateLegend(); });
+    const lbl = document.createElement('span');
+    lbl.className = 'clabel'; lbl.innerHTML = it.label;
+    row.appendChild(inp); row.appendChild(lbl);
+    cont.appendChild(row);
+  });
+}
+
+document.getElementById('btnChangeColor').addEventListener('click', ()=>{
+  const acts = document.getElementById('colorActions');
+  const btn = document.getElementById('btnChangeColor');
+  acts.classList.toggle('show');
+  btn.classList.toggle('on', acts.classList.contains('show'));
+});
+document.getElementById('btnResetColor').addEventListener('click', ()=>{
+  groupColors = { ...DEFAULT_COLORS };
+  applyColors();
+  buildColorScale();
+});
+
+function updateLegend(){
+  const d = DATA[substanceSel.value];
+  const labels = scaleLabels(d);
+  legendRow.innerHTML = `
+    <div><span class="dot" style="background:${groupColors.water}"></span>${labels.water}</div>
+    <div><span class="dot" style="background:${groupColors.cation}"></span>${labels.cation}</div>
+    <div><span class="dot" style="background:${groupColors.anion}"></span>${labels.anion}</div>
+  `;
+}
+
+function setState(after){
+  dissolved = after;
+  const sub = substanceSel.value;
+  const d = DATA[sub];
+  render(sub, after);
+  sync3D(sub, after);
+  applyColors();
+  sel = null;
+  applyHighlight();
+  if(mode3d && T3 && T3.viewMode==='molecule') setupMoleculePOV(true);
+  if(T3){
+    T3.boltActive = !!(after && mode3d && T3.viewMode==='molecule');
+    T3.boltT0 = performance.now();
+  }
+  if(window.PixelVase){ PixelVase.setLevel(after ? 0.78 : 0.25); }
+  stateLabel.firstChild.textContent = after ? 'Después de disolverse' : 'Antes de disolverse';
+  stateSub.textContent = d.strong ? '' : 'equilibrio: solo una parte de las moléculas reacciona';
+  toggleBtn.textContent = after ? '← Volver a antes' : 'Disolver en agua →';
+  showExplain();
+  updateSwapVisibility();
+}
+
+function update(){
+  const sub = substanceSel.value;
+  const d = DATA[sub];
+  const C = Math.pow(10, parseFloat(concSlider.value));
+  concVal.textContent = (C<0.001? C.toExponential(1) : fmt(C, C<0.01?3:2)) + ' M';
+  eqBox.innerHTML = eqHTML(sub);
+
+  let pH, ionConc, ionLabel, extraRow='';
+  if(d.mech==='acid'){
+    ionLabel = '[H₃O⁺]';
+    if(d.strong){ ionConc = C*d.n; pH = -Math.log10(ionConc); }
+    else{ ionConc = Math.sqrt(d.Ka*C); pH = -Math.log10(ionConc); extraRow = `<div class="math-line"><span>Ka</span><span>${d.Ka.toExponential(1)}</span></div>`; }
+  } else if(d.mech==='ionicBase'){
+    ionLabel = '[OH⁻]';
+    ionConc = C*d.n; const pOH=-Math.log10(ionConc); pH=14-pOH;
+  } else {
+    ionLabel = '[OH⁻]';
+    ionConc = Math.sqrt(d.Kb*C); const pOH=-Math.log10(ionConc); pH=14-pOH;
+    extraRow = `<div class="math-line"><span>Kb</span><span>${d.Kb.toExponential(1)}</span></div>`;
+  }
+  pH = Math.max(0, Math.min(14, pH));
+  const pct = Math.min(100, (ionConc/(C*d.n))*100);
+  lastPct = pct;
+
+  mathBox.innerHTML = `
+    <div class="math-line"><span>Disociación</span><span>${d.strong?'100% (completa)':fmt(pct,1)+'% (equilibrio)'}</span></div>
+    <div class="math-line"><span>Concentración inicial</span><span>${C<0.001?C.toExponential(1):fmt(C,C<0.01?3:2)} M</span></div>
+    ${extraRow}
+    <div class="math-line"><span>${ionLabel}</span><span>${ionConc<0.001?ionConc.toExponential(1):fmt(ionConc,ionConc<0.01?3:2)} M</span></div>
+    <div class="math-line"><span>${d.mech==='acid'?'pH = −log[H₃O⁺]':'pOH = −log[OH⁻] → pH=14−pOH'}</span><span>${fmt(pH,2)}</span></div>
+  `;
+
+  phVal.textContent = fmt(pH,2);
+  phLabel.textContent = pH<3?'Fuertemente ácido': pH<6?'Ácido': pH<8?'Neutro': pH<11?'Básico':'Fuertemente básico';
+  phLabel.style.color = pH<7 ? groupColors.cation : (pH>7? groupColors.anion : 'var(--ink-dim)');
+
+  document.getElementById('poolCtrl').style.display = d.strong ? 'none' : 'flex';
+  [...document.getElementById('poolBtns').children].forEach(b=> b.classList.toggle('on', parseInt(b.dataset.n,10)===poolN));
+  buildColorScale();
+  updateLegend();
+  setState(dissolved);
+}
+
+function pickReactSet(d, n){
+  if(d.strong) return new Set([0]);
+  const count = n===5 ? 2 : Math.max(1, Math.min(n, Math.round(lastPct/100*n)));
+  const idxs = Array.from({length:n}, (_,i)=>i);
+  for(let i=idxs.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idxs[i],idxs[j]]=[idxs[j],idxs[i]]; }
+  return new Set(idxs.slice(0,count));
+}
+
+// ---------- Intercambio dinámico de moléculas reaccionadas ----------
+let swapMode = 'random';
+let swapTimerHandle = null;
+
+function stopSwapLoop(){
+  if(swapTimerHandle){ clearTimeout(swapTimerHandle); clearInterval(swapTimerHandle); swapTimerHandle = null; }
+}
+
+function swapReaction(){
+  const d = DATA[substanceSel.value];
+  if(d.strong || !dissolved) return;
+  const n = poolN;
+  if(reactSet.size===0 || reactSet.size>=n) return;
+  const notReacted = [];
+  for(let i=0;i<n;i++) if(!reactSet.has(i)) notReacted.push(i);
+  if(notReacted.length===0) return;
+  const reactedArr = [...reactSet];
+  const toRevert = reactedArr[Math.floor(Math.random()*reactedArr.length)];
+  const toReact = notReacted[Math.floor(Math.random()*notReacted.length)];
+  reactSet.delete(toRevert);
+  reactSet.add(toReact);
+  render(substanceSel.value, true);
+  sync3D(substanceSel.value, true);
+  if(sel){ showExplain(); applyHighlight(); }
+}
+
+function startRandomLoop(){
+  stopSwapLoop();
+  const schedule = ()=>{
+    const delay = 1000 + Math.random()*2000; // entre 1 y 3 segundos: coherente, no caótico
+    swapTimerHandle = setTimeout(()=>{ swapReaction(); schedule(); }, delay);
+  };
+  schedule();
+}
+function startTimerLoop(){
+  stopSwapLoop();
+  const secs = Math.max(1, parseInt(document.getElementById('swapSecondsInput').value,10) || 5);
+  swapTimerHandle = setInterval(swapReaction, secs*1000);
+}
+
+function updateSwapModeUI(){
+  [...document.getElementById('swapBtns').children].forEach(b=> b.classList.toggle('on', b.dataset.mode===swapMode));
+  document.getElementById('swapTimerBox').style.display = swapMode==='timer' ? 'flex' : 'none';
+}
+
+function setSwapMode(mode){
+  swapMode = mode;
+  updateSwapModeUI();
+  stopSwapLoop();
+  if(mode==='random') startRandomLoop();
+  else if(mode==='timer') startTimerLoop();
+  // 'force': sin bucle automático, cada click del botón dispara un intercambio manual
+}
+
+function updateSwapVisibility(){
+  const d = DATA[substanceSel.value];
+  const show = dissolved && !d.strong && reactSet.size>=2;
+  document.getElementById('swapRow').style.display = show ? 'flex' : 'none';
+  if(show){ setSwapMode(swapMode); }
+  else { stopSwapLoop(); }
+}
+
+document.getElementById('swapBtns').addEventListener('click', e=>{
+  const mode = e.target.dataset.mode; if(!mode) return;
+  if(mode==='force'){
+    setSwapMode('force');
+    swapReaction();
+  } else {
+    setSwapMode(mode);
+  }
+});
+document.getElementById('swapSecondsInput').addEventListener('change', ()=>{
+  if(swapMode==='timer') startTimerLoop();
+});
+
+toggleBtn.addEventListener('click', ()=>{
+  if(!dissolved){
+    const d = DATA[substanceSel.value];
+    reactSet = pickReactSet(d, d.strong ? 1 : poolN);
+  }
+  setState(!dissolved);
+});
+substanceSel.addEventListener('change', ()=>{ dissolved=false; reactSet=new Set([0]); update(); });
+concSlider.addEventListener('input', update);
+
+const poolBtnsEl = document.getElementById('poolBtns');
+[1,2,3,4,5].forEach(nVal=>{
+  const b = document.createElement('button');
+  b.type='button'; b.textContent=nVal; b.dataset.n=nVal;
+  b.addEventListener('click', ()=>{
+    if(nVal===poolN) return;
+    poolN = nVal; reactSet = new Set([0]); dissolved = false;
+    update();
+  });
+  poolBtnsEl.appendChild(b);
+});
+
+document.getElementById('btn3d').addEventListener('click', ()=>{
+  if(mode3d){ exit3D(); return; }
+  document.getElementById('modeMenu').classList.add('show');
+});
+document.getElementById('modeMenu').addEventListener('click', e=>{
+  const c = e.target.dataset.choice; if(!c) return;
+  document.getElementById('modeMenu').classList.remove('show');
+  if(c==='orbit') enter3D('orbit');
+  else if(c==='presence') document.getElementById('presenceMenu').classList.add('show');
+});
+document.getElementById('presenceMenu').addEventListener('click', e=>{
+  const c = e.target.dataset.choice; if(!c) return;
+  document.getElementById('presenceMenu').classList.remove('show');
+  if(c==='person'){
+    // Antes de entrar al modo persona, mostramos advertencia
+    document.getElementById('personWarning').classList.remove('hidden');
+  }
+  else if(c==='molecule') enter3D('molecule');
+  else if(c==='back') document.getElementById('modeMenu').classList.add('show');
+});
+document.getElementById('reset3d').addEventListener('click', ()=>{
+  if(!T3) return;
+  if(T3.viewMode==='person') resetPlayer();
+  else if(T3.viewMode==='molecule') resetMolCam();
+  else resetCam();
+});
+window.addEventListener('resize', resize3D);
+if(window.ResizeObserver) new ResizeObserver(resize3D).observe(document.getElementById('threeWrap'));
+
+update();
+
+(function EquilibriumModule(){
+  'use strict';
+  /* Módulo 02 · Equilibrio de solubilidad.
+     Contenido basado únicamente en el apunte “EQUILIBRIO de SOLUBILIDAD” (Colegio San Martín de Tours). */
+  const $ = id => document.getElementById(id);
+  const phWrap = $('phWrap'), eqWrap = $('eqWrap');
+  const clamp = (x,a,b)=> Math.max(a, Math.min(b, x));
+  const rnd = (a,b)=> a + Math.random()*(b-a);
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+  const TAU = Math.PI*2;
+  let active = false, raf = null, lastTs = 0;
+
+  function sci(x, d=2){
+    if(!isFinite(x)) return '∞';
+    if(x===0) return '0';
+    if(x>=0.01 && x<1000) return x.toLocaleString('es-AR',{minimumFractionDigits:0, maximumFractionDigits:x>=10?1:d+1});
+    let e = Math.floor(Math.log10(x)); let m = x/Math.pow(10,e);
+    let ms = m.toFixed(d-1);
+    if(parseFloat(ms)>=10){ m/=10; e++; ms = m.toFixed(d-1); }
+    return ms.replace('.',',')+'×10<sup>'+String(e).replace('-','−')+'</sup>';
+  }
+  function fitCanvas(cv){
+    const r = cv.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(10, Math.round(r.width)), h = Math.max(10, Math.round(r.height));
+    if(cv._w!==w || cv._h!==h || cv._dpr!==dpr){
+      cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+      cv._w=w; cv._h=h; cv._dpr=dpr;
+    }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx,w,h};
+  }
+  function drawBall(ctx,x,y,r,col,label,alpha){
+    ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.arc(x,y,r,0,TAU); ctx.fillStyle = col; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(11,21,32,.45)'; ctx.stroke();
+    if(label){
+      ctx.fillStyle = '#0B1520';
+      ctx.font = '700 '+Math.max(8, Math.min(11, r*1.0))+'px Inter, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y+0.5);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------- Sales: valores de Kps a 25 °C de la tabla del apunte ---------- */
+  const CATS = {
+    Ag:['Ag<sup>+</sup>','Ag⁺','+','AgNO₃'],  Ba:['Ba<sup>2+</sup>','Ba²⁺','2+','BaCl₂'],
+    Ca:['Ca<sup>2+</sup>','Ca²⁺','2+','CaCl₂'], Sr:['Sr<sup>2+</sup>','Sr²⁺','2+','Sr(NO₃)₂'],
+    Pb:['Pb<sup>2+</sup>','Pb²⁺','2+','Pb(NO₃)₂'], Mg:['Mg<sup>2+</sup>','Mg²⁺','2+','MgCl₂'],
+    Zn:['Zn<sup>2+</sup>','Zn²⁺','2+','ZnCl₂'], Al:['Al<sup>3+</sup>','Al³⁺','3+','AlCl₃'],
+    Fe:['Fe<sup>3+</sup>','Fe³⁺','3+','FeCl₃'], Cr:['Cr<sup>3+</sup>','Cr³⁺','3+','CrCl₃']
+  };
+  const ANS = {
+    Cl:['Cl<sup>−</sup>','Cl⁻','−','NaCl'], Br:['Br<sup>−</sup>','Br⁻','−','NaBr'], I:['I<sup>−</sup>','I⁻','−','NaI'],
+    SO4:['SO<sub>4</sub><sup>2−</sup>','SO₄²⁻','2−','Na₂SO₄'], CO3:['CO<sub>3</sub><sup>2−</sup>','CO₃²⁻','2−','Na₂CO₃'],
+    CrO4:['CrO<sub>4</sub><sup>2−</sup>','CrO₄²⁻','2−','K₂CrO₄'], F:['F<sup>−</sup>','F⁻','−','NaF'],
+    OH:['OH<sup>−</sup>','OH⁻','−','NaOH'], PO4:['PO<sub>4</sub><sup>3−</sup>','PO₄³⁻','3−','Na₃PO₄']
+  };
+  function mk(u,f,cat,an,a,b,Kps,M,name,ph){
+    const c=CATS[cat], n=ANS[an];
+    return {u,f,a,b,K:Kps,M,name,cat:c[0],catU:c[1],cz:c[2],cSrc:c[3],an:n[0],anU:n[1],az:n[2],aSrc:n[3],ph:ph||null};
+  }
+  const SALTS = {
+    AgCl:   mk('AgCl','AgCl','Ag','Cl',1,1,1.6e-10,143.32,'cloruro de plata'),
+    AgBr:   mk('AgBr','AgBr','Ag','Br',1,1,7.7e-13,187.77,'bromuro de plata'),
+    AgI:    mk('AgI','AgI','Ag','I',1,1,8.3e-17,234.77,'yoduro de plata'),
+    BaSO4:  mk('BaSO₄','BaSO<sub>4</sub>','Ba','SO4',1,1,1.1e-10,233.39,'sulfato de bario'),
+    SrSO4:  mk('SrSO₄','SrSO<sub>4</sub>','Sr','SO4',1,1,3.8e-7,183.68,'sulfato de estroncio'),
+    CaCO3:  mk('CaCO₃','CaCO<sub>3</sub>','Ca','CO3',1,1,8.7e-9,100.09,'carbonato de calcio'),
+    PbCrO4: mk('PbCrO₄','PbCrO<sub>4</sub>','Pb','CrO4',1,1,2.0e-14,323.19,'cromato de plomo(II)'),
+    PbI2:   mk('PbI₂','PbI<sub>2</sub>','Pb','I',1,2,1.4e-8,461.01,'yoduro de plomo(II)'),
+    PbCl2:  mk('PbCl₂','PbCl<sub>2</sub>','Pb','Cl',1,2,2.4e-4,278.11,'cloruro de plomo(II)'),
+    CaF2:   mk('CaF₂','CaF<sub>2</sub>','Ca','F',1,2,4.0e-11,78.07,'fluoruro de calcio'),
+    BaF2:   mk('BaF₂','BaF<sub>2</sub>','Ba','F',1,2,1.7e-6,175.32,'fluoruro de bario'),
+    MgOH2:  mk('Mg(OH)₂','Mg(OH)<sub>2</sub>','Mg','OH',1,2,1.2e-12,58.32,'hidróxido de magnesio','oh'),
+    CaOH2:  mk('Ca(OH)₂','Ca(OH)<sub>2</sub>','Ca','OH',1,2,8.0e-6,74.09,'hidróxido de calcio','oh'),
+    ZnOH2:  mk('Zn(OH)₂','Zn(OH)<sub>2</sub>','Zn','OH',1,2,1.8e-14,99.42,'hidróxido de cinc','oh'),
+    Ag2CO3: mk('Ag₂CO₃','Ag<sub>2</sub>CO<sub>3</sub>','Ag','CO3',2,1,8.1e-12,275.75,'carbonato de plata'),
+    Ag2SO4: mk('Ag₂SO₄','Ag<sub>2</sub>SO<sub>4</sub>','Ag','SO4',2,1,1.4e-5,311.80,'sulfato de plata'),
+    AlOH3:  mk('Al(OH)₃','Al(OH)<sub>3</sub>','Al','OH',1,3,1.8e-33,78.00,'hidróxido de aluminio','oh'),
+    FeOH3:  mk('Fe(OH)₃','Fe(OH)<sub>3</sub>','Fe','OH',1,3,1.1e-36,106.87,'hidróxido de hierro(III)','oh'),
+    CrOH3:  mk('Cr(OH)₃','Cr(OH)<sub>3</sub>','Cr','OH',1,3,3.0e-29,103.02,'hidróxido de cromo(III)','oh'),
+    CaPO4:  mk('Ca₃(PO₄)₂','Ca<sub>3</sub>(PO<sub>4</sub>)<sub>2</sub>','Ca','PO4',3,2,1.2e-26,310.18,'fosfato de calcio')
+  };
+  const SALT_GROUPS = [
+    ['Estequiometría 1:1 (AB)', ['AgCl','AgBr','AgI','BaSO4','SrSO4','CaCO3','PbCrO4']],
+    ['1:2 y 2:1 (AB₂ / A₂B)', ['PbI2','PbCl2','CaF2','BaF2','MgOH2','CaOH2','ZnOH2','Ag2CO3','Ag2SO4']],
+    ['1:3 y 3:2 (AB₃ / A₃B₂)', ['AlOH3','FeOH3','CrOH3','CaPO4']]
+  ];
+
+  const K = { salt:'AgCl', xD:0, cellsF:0, P:[], tick:0, ui:0, view:null, st:'', init:false };
+  const CELL = 19, BASE = 10;
+
+  /* x = mol de sal disuelta por litro (solubilidad molar) tal que Qps = Kps */
+  function solveX(S, ions){
+    let lo=0, hi=1;
+    for(let i=0;i<220;i++){
+      const m=(lo+hi)/2, io=ions(m);
+      const f = Math.pow(io.cat, S.a) * Math.pow(io.an, S.b);
+      if(f>S.K) hi=m; else lo=m;
+    }
+    return (lo+hi)/2;
+  }
+  function kpsGet(){
+    const S = SALTS[K.salt];
+    const T = Math.pow(10, parseFloat($('kpsT').value));
+    let ci = $('kpsCI').value; if(ci==='ph' && !S.ph) ci='none';
+    const pH = parseFloat($('kpsPH').value);
+    const c0 = (ci==='cat'||ci==='an') ? Math.pow(10, parseFloat($('kpsC').value)) : 0;
+    const cc = ci==='cat' ? c0 : 0, ca = ci==='an' ? c0 : 0;
+    let ions, oh = 0;
+    if(ci==='ph'){ oh = Math.pow(10,pH-14); ions = x=>({cat:S.a*x, an:oh}); }   // el pH fija [OH⁻]
+    else ions = x=>({cat:S.a*x+cc, an:S.b*x+ca});
+    const s = solveX(S,ions), s0 = solveX(S,x=>({cat:S.a*x, an:S.b*x}));
+    return {S,T,ci,c0,cc,ca,pH,oh,ions,s,s0,x:Math.min(T,s)};
+  }
+  function visCount(c){ if(c<1e-12) return 0; return clamp(Math.round(26*(Math.log10(c)+12)/12),1,26); }
+
+  function layout(w,h,n){
+    const S = SALTS[K.salt];
+    const cells = [];
+    let r=0, left=n;
+    while(left>0 && r<BASE){
+      const fw = BASE-r;
+      const len = Math.min(fw,left);
+      const cols = Array.from({length:fw},(_,i)=>i).sort((p,q)=> Math.abs(p-(fw-1)/2)-Math.abs(q-(fw-1)/2) || p-q).slice(0,len);
+      cols.forEach(c=>{
+        const x = w/2 + (c-(fw-1)/2)*CELL, y = h-14-r*CELL;
+        cells.push({x,y,type: ((c+r)%(S.a+S.b))<S.a ? 'c':'a', r});
+      });
+      left-=len; r++;
+    }
+    if(!cells.length) return {cells, x0:0, x1:0, top:h};
+    return {
+      cells,
+      x0: Math.min(...cells.map(c=>c.x))-CELL/2,
+      x1: Math.max(...cells.map(c=>c.x))+CELL/2,
+      top: Math.min(...cells.map(c=>c.y))-CELL/2
+    };
+  }
+  const ionR = t => t==='c' ? 7.5 : 9.5;
+  const ionCol = t => t==='c' ? groupColors.cation : groupColors.anion;
+  const ionLbl = t => { const S=SALTS[K.salt]; return t==='c'? S.cz : S.az; };
+
+  function spawnK(t, L, w, h, fromCrystal){
+    let x,y,vy;
+    if(fromCrystal && L.cells.length){
+      const c = pick(L.cells.slice(-8)); x=c.x; y=c.y-CELL*0.7; vy=rnd(-60,-20);
+    } else {
+      x=rnd(16,w-16); y=rnd(26, Math.max(40,Math.min(h-30,L.top-16))); vy=rnd(-40,40);
+    }
+    K.P.push({type:t,x,y,vx:rnd(-40,40),vy,state:'free',alpha:0});
+  }
+  function sendK(p, L){
+    if(L.cells.length){ const c = pick(L.cells.slice(-8)); p.state='ppt'; p.tx=c.x; p.ty=c.y-CELL*0.6; }
+    else p.state='fade';
+  }
+  const cellsFor = solid => clamp(Math.round(6+34*(Math.log10(solid)+9)/8),3,44);
+
+  function resetKps(){
+    const g = kpsGet();
+    K.xD = g.x;
+    const solid = Math.max(0, g.T-K.xD);
+    const has = solid>Math.max(1e-14,0.01*g.T);
+    K.cellsF = has ? cellsFor(solid) : 0;
+    K.P = [];
+    const cv = $('kpsCanvas'); const w = cv._w||620, h = cv._h||340;
+    const L = layout(w,h,Math.round(K.cellsF));
+    const io0 = g.ions(K.xD);
+    for(let i=0;i<visCount(io0.cat);i++){ spawnK('c',L,w,h,false); K.P[K.P.length-1].alpha=1; }
+    for(let i=0;i<visCount(io0.an);i++){ spawnK('a',L,w,h,false); K.P[K.P.length-1].alpha=1; }
+  }
+
+  function kpsStatic(){
+    const S = SALTS[K.salt];
+    $('kpsEq').innerHTML =
+      `${S.f}(s) <span class="arrow">⇌</span> ${S.a>1?S.a+' ':''}${S.cat}(ac) + ${S.b>1?S.b+' ':''}${S.an}(ac)` +
+      `<div style="margin-top:8px;font-size:.9rem;color:var(--ink-dim);">K<sub>ps</sub> = [${S.cat}]${S.a>1?'<sup>'+S.a+'</sup>':''}[${S.an}]${S.b>1?'<sup>'+S.b+'</sup>':''}</div>`;
+    const sel = $('kpsCI'); const cur = sel.value || 'none';
+    sel.innerHTML = `<option value="none">Ninguno (agua pura)</option>
+      <option value="cat">Catión común: ${S.catU} (agregando ${S.cSrc})</option>
+      <option value="an">Anión común: ${S.anU} (agregando ${S.aSrc})</option>` +
+      (S.ph ? `<option value="ph">pH del medio (varía el OH⁻)</option>` : '');
+    sel.value = [...sel.options].some(o=>o.value===cur) ? cur : 'none';
+    const cont = $('kpsColorScale'); cont.innerHTML = '';
+    [['cation',S.cat],['anion',S.an]].forEach(([key,lab])=>{
+      const row = document.createElement('div'); row.className='color-row';
+      const inp = document.createElement('input'); inp.type='color'; inp.className='swatch'; inp.value=groupColors[key];
+      inp.addEventListener('input',()=>{ groupColors[key]=inp.value; kpsLegend(); });
+      const sp = document.createElement('span'); sp.className='clabel'; sp.innerHTML=lab;
+      row.appendChild(inp); row.appendChild(sp); cont.appendChild(row);
+    });
+    kpsLegend();
+  }
+  function kpsLegend(){
+    const S = SALTS[K.salt];
+    $('kpsLegend').innerHTML =
+      `<div><span class="dot" style="background:${groupColors.cation}"></span>${S.cat}</div>
+       <div><span class="dot" style="background:${groupColors.anion}"></span>${S.an}</div>
+       <div style="color:var(--ink-dim);">Pirámide inferior: sólido sin disolver (precipitado)</div>`;
+  }
+  function kpsLabels(){
+    const g = kpsGet();
+    $('kpsTVal').innerHTML = sci(g.T)+' M';
+    $('kpsCVal').innerHTML = (g.ci==='cat'||g.ci==='an') ? sci(g.c0)+' M' : '—';
+    $('kpsC').disabled = !(g.ci==='cat'||g.ci==='an');
+    $('kpsCrow').classList.toggle('hide', g.ci==='ph');
+    $('kpsPHrow').classList.toggle('hide', g.ci!=='ph');
+    $('kpsPHVal').textContent = g.pH.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  }
+
+  function stepKps(dt){
+    const cv = $('kpsCanvas');
+    const {ctx,w,h} = fitCanvas(cv);
+    const g = kpsGet(), S = g.S;
+    K.xD = Math.min(K.xD, g.T);
+    K.xD += (g.x-K.xD)*(1-Math.exp(-dt/0.5));
+    if(Math.abs(g.x-K.xD) < g.x*3e-3) K.xD = g.x;
+
+    const io = g.ions(K.xD), cat = io.cat, an = io.an;
+    const Q = Math.pow(cat,S.a)*Math.pow(an,S.b);
+    const ratio = Q/S.K;
+    const solid = Math.max(0, g.T-K.xD);
+    const has = solid>Math.max(1e-14,0.01*g.T);
+    K.st = ratio>1.03 ? 'sup' : (ratio<0.97 ? 'uns' : 'sat');
+    K.view = {g,cat,an,Q,ratio,solid,has};
+
+    const tgtCells = has ? cellsFor(solid) : 0;
+    if(K.cellsF<tgtCells) K.cellsF=Math.min(tgtCells,K.cellsF+dt*10); else K.cellsF=Math.max(tgtCells,K.cellsF-dt*10);
+    const L = layout(w,h,Math.round(K.cellsF));
+
+    K.tick -= dt;
+    if(K.tick<=0){
+      K.tick = 0.12;
+      [['c',visCount(cat)],['a',visCount(an)]].forEach(([t,tg])=>{
+        let diff = tg - K.P.filter(p=>p.type===t && p.state==='free').length;
+        const steps = Math.min(4, Math.ceil(Math.abs(diff)/6));
+        for(let k=0;k<steps && diff!==0;k++){
+          if(diff>0){ spawnK(t,L,w,h,true); diff--; }
+          else { const f=K.P.filter(p=>p.type===t&&p.state==='free'); if(f.length) sendK(pick(f),L); diff++; }
+        }
+      });
+    }
+
+    for(let i=K.P.length-1;i>=0;i--){
+      const p = K.P[i];
+      if(p.alpha<1 && p.state!=='fade') p.alpha = Math.min(1,p.alpha+dt*2.5);
+      if(p.state==='free'){
+        p.vx += rnd(-1,1)*260*dt; p.vy += rnd(-1,1)*260*dt;
+        const sp = Math.hypot(p.vx,p.vy), mx=58;
+        if(sp>mx){ p.vx*=mx/sp; p.vy*=mx/sp; }
+        p.x += p.vx*dt; p.y += p.vy*dt;
+        const r = ionR(p.type);
+        if(p.x<r+4){ p.x=r+4; p.vx=Math.abs(p.vx); }
+        if(p.x>w-r-4){ p.x=w-r-4; p.vx=-Math.abs(p.vx); }
+        if(p.y<r+24){ p.y=r+24; p.vy=Math.abs(p.vy); }
+        if(p.y>h-r-4){ p.y=h-r-4; p.vy=-Math.abs(p.vy); }
+        if(L.cells.length && p.x>L.x0-r && p.x<L.x1+r && p.y>L.top-r){ p.y=L.top-r; p.vy=-Math.abs(p.vy); }
+      } else if(p.state==='ppt'){
+        const dx=p.tx-p.x, dy=p.ty-p.y, d=Math.hypot(dx,dy);
+        if(d<7){ K.P.splice(i,1); continue; }
+        p.x += dx/d*150*dt; p.y += dy/d*150*dt;
+      } else if(p.state==='fade'){
+        p.alpha -= dt*2; if(p.alpha<=0){ K.P.splice(i,1); continue; }
+      }
+    }
+
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle = 'rgba(234,242,245,.12)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0,h-3.5); ctx.lineTo(w,h-3.5); ctx.stroke();
+    L.cells.forEach(c=> drawBall(ctx,c.x,c.y,c.type==='c'?7.5:9.5,ionCol(c.type),ionLbl(c.type),0.92));
+    K.P.forEach(p=> drawBall(ctx,p.x,p.y,ionR(p.type),ionCol(p.type),ionLbl(p.type),p.alpha));
+
+    K.ui -= dt;
+    if(K.ui<=0){ K.ui = 0.2; kpsUI(); }
+  }
+
+  function kpsUI(){
+    const v = K.view; if(!v) return;
+    const {g,cat,an,Q,ratio,solid,has} = v, S = g.S;
+    kpsLabels();
+    const coef = Math.pow(S.a,S.a)*Math.pow(S.b,S.b);
+    const gen = `(${S.a>1?S.a:''}S)${S.a>1?'<sup>'+S.a+'</sup>':''}(${S.b>1?S.b:''}S)${S.b>1?'<sup>'+S.b+'</sup>':''}`;
+    const clase = g.s0>0.04 ? 'soluble' : (g.s0>=0.01 ? 'ligeramente soluble' : 'poco soluble');
+    const fmtPH = x => x.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    let rows = `
+      <div class="math-line"><span>K<sub>ps</sub> = (n·S)<sup>n</sup>(m·S)<sup>m</sup></span><span>${gen} = ${coef===1?'':coef+' '}S<sup>${S.a+S.b}</sup></span></div>
+      <div class="math-line"><span>K<sub>ps</sub> (25 °C)</span><span>${sci(S.K)}</span></div>
+      <div class="math-line"><span>Solubilidad molar (agua pura)</span><span>${sci(g.s0)} mol/L</span></div>
+      <div class="math-line"><span>Solubilidad (agua pura)</span><span>${sci(g.s0*S.M)} g/L</span></div>
+      <div class="math-line"><span>Clasificación</span><span>${clase}</span></div>`;
+    if(g.ci==='ph'){
+      rows += `<div class="math-line"><span>pH del medio</span><span>${fmtPH(g.pH)}</span></div>
+               <div class="math-line"><span>[OH⁻]</span><span>${sci(g.oh)} M</span></div>`;
+    }
+    if(g.ci!=='none'){
+      rows += `<div class="math-line"><span>${g.ci==='ph'?'Solubilidad molar a este pH':'Solubilidad molar con ion común'}</span><span>${sci(g.s)} mol/L</span></div>`;
+    }
+    rows += `
+      <div class="math-line"><span>[${S.cat}]</span><span>${sci(cat)} M</span></div>
+      <div class="math-line"><span>[${S.an}]</span><span>${sci(an)} M</span></div>
+      <div class="math-line"><span>Q<sub>ps</sub> = [${S.cat}]${S.a>1?'<sup>'+S.a+'</sup>':''}[${S.an}]${S.b>1?'<sup>'+S.b+'</sup>':''}</span><span>${sci(Q)}</span></div>
+      <div class="math-line"><span>Q<sub>ps</sub> / K<sub>ps</sub></span><span>${sci(ratio)}</span></div>`;
+    if(S.an.indexOf('OH')>=0 && an>0){
+      const pH = 14+Math.log10(an);
+      rows += `<div class="math-line"><span>pH de la solución</span><span>${pH.toLocaleString('es-AR',{maximumFractionDigits:2,minimumFractionDigits:2})}</span></div>`;
+    }
+    $('kpsMath').innerHTML = rows;
+
+    $('kpsMark').style.left = clamp((Math.log10(Math.max(ratio,1e-12))+7)/10, 0.02, 0.98)*100+'%';
+
+    let cls, ptxt, title, body;
+    if(K.st==='uns'){
+      cls='no'; ptxt='Insaturada'; title='Q<sub>ps</sub> &lt; K<sub>ps</sub>: solución insaturada';
+      body = `Hay <b>${sci(g.T)} M</b> de ${S.name} y la solución puede disolver hasta <b>${sci(g.s)} M</b>. Como Q<sub>ps</sub> &lt; K<sub>ps</sub>, no hay precipitación.`;
+    } else if(K.st==='sat'){
+      cls='ok'; ptxt='Saturada'; title='Q<sub>ps</sub> = K<sub>ps</sub>: solución saturada';
+      body = has
+        ? `Q<sub>ps</sub> = K<sub>ps</sub>: la solución está saturada y quedan <b>${sci(solid)} M</b> de sólido sin disolver.`
+        : `Q<sub>ps</sub> = K<sub>ps</sub>: la solución está saturada (sin precipitación).`;
+    } else {
+      cls='ok'; ptxt='Sobresaturada'; title='Q<sub>ps</sub> &gt; K<sub>ps</sub>: solución sobresaturada';
+      body = `Q<sub>ps</sub> &gt; K<sub>ps</sub>: existe precipitación hasta que las concentraciones iónicas dejan a Q<sub>ps</sub> igual a K<sub>ps</sub>.`;
+    }
+    if(g.ci==='cat' || g.ci==='an'){
+      const ion = g.ci==='cat' ? S.cat : S.an;
+      body += `<br><br><b>Ion común:</b> al agregar ${ion} (${g.ci==='cat'?S.cSrc:S.aSrc}) se modifica la concentración de uno de los iones de la expresión de equilibrio; por el principio de Le Châtelier el proceso se desplaza hacia la izquierda y precipita una fracción mayor del compuesto insoluble. <b>Disminuye la solubilidad</b>: de ${sci(g.s0)} M a ${sci(g.s)} M.`;
+    } else if(g.ci==='ph'){
+      body += `<br><br><b>Efecto del pH:</b> a pH ${fmtPH(g.pH)} queda [OH⁻] = ${sci(g.oh)} M. Al aumentar el pH (más OH⁻) el equilibrio se desplaza hacia la izquierda y disminuye la solubilidad (equivale al ion común); al disminuir el pH (se añaden protones) baja el [OH⁻], el equilibrio se desplaza hacia la derecha y aumenta la solubilidad. Acá: ${sci(g.s0)} M → ${sci(g.s)} M.`;
+    }
+    const pill = $('kpsPill');
+    pill.className = 'pill '+cls; pill.textContent = ptxt;
+    $('kpsExTitle').innerHTML = title;
+    $('kpsExBody').innerHTML = body;
+    $('kpsChips').innerHTML =
+      `<span class="chip">Sólido sin disolver: <b>${has?sci(solid)+' M':'ninguno'}</b></span>
+       <span class="chip">Solubilidad molar: <b>${sci(g.s)} mol/L</b></span>
+       <span class="chip">Q<sub>ps</sub> / K<sub>ps</sub>: <b>${sci(ratio)}</b></span>`;
+    $('eqStateSub').textContent = S.u + ' · ' + ptxt;
+  }
+
+  /* ---------- navegación ---------- */
+  function frame(ts){
+    if(!active) return;
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (ts-lastTs)/1000 || 0.016); lastTs = ts;
+    stepKps(dt);
+  }
+  function start(){ active = true; lastTs = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); }
+  function stop(){ active=false; cancelAnimationFrame(raf); }
+
+  window.showTopic = function(id){
+    if(id==='kps'){
+      phWrap.classList.add('hidden'); eqWrap.classList.remove('hidden');
+      if(!K.init){ K.init=true; initUI(); }
+      if(window.PixelVase) PixelVase.setLevel(0.55);
+      requestAnimationFrame(()=>{ resetKps(); start(); });
+      $('eqIntroOverlay').classList.remove('hidden');
+    } else {
+      endTour(); $('eqIntroOverlay').classList.add('hidden');
+      stop();
+      eqWrap.classList.add('hidden'); phWrap.classList.remove('hidden');
+      if(typeof updateSwapVisibility==='function') updateSwapVisibility();
+      if(window.PixelVase) PixelVase.setLevel(0.25);
+    }
+  };
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('[data-back]')) return;
+    if(typeof mode3d!=='undefined' && mode3d && typeof exit3D==='function') exit3D();
+    if(typeof stopSwapLoop==='function') stopSwapLoop();
+    endTour(); $('eqIntroOverlay').classList.add('hidden');
+    stop();
+    $('topicsOverlay').classList.remove('hidden');
+  });
+
+  function initUI(){
+    const sel = $('kpsSalt'); sel.innerHTML='';
+    SALT_GROUPS.forEach(([lab,keys])=>{
+      const og = document.createElement('optgroup'); og.label = lab;
+      keys.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent = SALTS[k].name.charAt(0).toUpperCase()+SALTS[k].name.slice(1)+' — '+SALTS[k].u; og.appendChild(o); });
+      sel.appendChild(og);
+    });
+    sel.value = K.salt;
+    sel.addEventListener('change', ()=>{ K.salt = sel.value; kpsStatic(); kpsLabels(); resetKps(); });
+    $('kpsT').addEventListener('input', kpsLabels);
+    $('kpsC').addEventListener('input', kpsLabels);
+    $('kpsPH').addEventListener('input', kpsLabels);
+    $('kpsCI').addEventListener('change', kpsLabels);
+    $('kpsBtnColor').addEventListener('click', ()=>{
+      const acts=$('kpsColorActions'); acts.classList.toggle('show');
+      $('kpsBtnColor').classList.toggle('on', acts.classList.contains('show'));
+    });
+    $('kpsBtnResetColor').addEventListener('click', ()=>{
+      groupColors.cation = DEFAULT_COLORS.cation; groupColors.anion = DEFAULT_COLORS.anion; kpsStatic();
+    });
+    kpsStatic(); kpsLabels();
+  }
+
+  /* =====================================================================
+     EXPLICACIÓN GUIADA (solo con lo que dice el apunte)
+     ===================================================================== */
+  const setRange = (id,v)=>{ const el=$(id); el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); };
+  const setSel   = (id,v)=>{ const el=$(id); el.value=v; el.dispatchEvent(new Event('change',{bubbles:true})); };
+  const card = id => $(id).closest('.card');
+  const grp  = id => $(id).closest('.group');
+  function kpsSet(salt,T,ci,c){
+    setRange('kpsT',T); setRange('kpsC', c===undefined?-2:c); setSel('kpsCI',ci);
+    if($('kpsSalt').value!==salt) setSel('kpsSalt',salt);
+  }
+  function kpsSetPH(salt,T,pH){
+    const changed = $('kpsSalt').value!==salt;
+    if(changed) setSel('kpsSalt',salt);
+    setRange('kpsT',T); setRange('kpsPH',pH); setSel('kpsCI','ph');
+    if(changed) resetKps();
+  }
+  let tourTimers = [];
+  const later = (fn,ms)=>{ tourTimers.push(setTimeout(fn,ms)); };
+  const SIM = () => $('kpsCanvas').closest('.sim-wrap');
+  const PART = 'Equilibrio de solubilidad';
+
+  const STEPS = [
+    { part:PART, title:'Reacciones de precipitación',
+      hl:()=>[SIM()],
+      setup(){ kpsSet('PbI2',-2,'none'); },
+      body:`Las <b>reacciones de precipitación</b> son un tipo común de reacciones en disolución acuosa que se caracterizan por la formación de un producto insoluble, o <b>precipitado</b>: un sólido insoluble que se separa de la disolución. Ejemplo: <b>Pb(NO₃)₂(ac) + 2 KI(ac) → PbI₂(s) + 2 KNO₃(ac)</b>. Lo del fondo es ese PbI₂. Para predecir la formación de un precipitado hay que tener en cuenta la <b>solubilidad</b> del soluto: la máxima cantidad de soluto que se disolverá en una cantidad dada de disolvente a una temperatura específica.` },
+
+    { part:PART, title:'Producto de solubilidad (Kps)',
+      hl:()=>[card('kpsEq')],
+      setup(){ kpsSet('AgCl',-3,'none'); },
+      body:`El <b>producto de solubilidad</b> es la constante de equilibrio del proceso de disociación de un sólido insoluble en iones. Como la concentración del sólido precipitado no varía, se incluye en la constante, y ésta se expresa solo como el producto de las <b>concentraciones de los iones elevadas a sus coeficientes estequiométricos</b> (ley de acción de masas): <b>AgCl(s) ⇌ Ag⁺(ac) + Cl⁻(ac)</b>, con <b>K<sub>ps</sub> = [Ag⁺][Cl⁻]</b>.` },
+
+    { part:PART, title:'Tabla de productos de solubilidad',
+      hl:()=>[grp('kpsSalt')],
+      setup(){ kpsSet('AgCl',-3,'none'); },
+      body:`El desplegable usa los valores de la tabla de <b>productos de solubilidad a 25 °C</b> de tu apunte. Las sales solubles presentan valores de K<sub>ps</sub> grandes, por lo que no se consideran, por la misma razón por la que no se consideran los K<sub>a</sub> de los ácidos fuertes.` },
+
+    { part:PART, title:'Qué ves en el vaso',
+      hl:()=>[SIM()],
+      setup(){ kpsSet('AgCl',-3,'none'); },
+      body:`Las esferas <b>naranjas</b> son los cationes (Ag⁺) y las <b>turquesas</b> los aniones (Cl⁻); el signo indica la carga. La <b>pirámide del fondo</b> es el sólido sin disolver (el precipitado). La cantidad de esferas es ilustrativa, no una cuenta exacta de iones.` },
+
+    { part:PART, title:'Solubilidad y solubilidad molar',
+      hl:()=>[card('kpsMath')],
+      setup(){ kpsSet('AgCl',-3,'none'); },
+      body:`La <b>solubilidad (g/L)</b> son los gramos de soluto disueltos en 1 L de disolución saturada; la <b>solubilidad molar (mol/L)</b>, los moles. Las dos, junto con el producto de solubilidad, <b>se refieren siempre a una disolución saturada</b>. La tarjeta <b>Cálculo</b> muestra ambas para la sal elegida.` },
+
+    { part:PART, title:'De g/L a Kps (y al revés)',
+      hl:()=>[card('kpsMath')],
+      setup(){ kpsSet('AgCl',-3,'none'); },
+      body:`La relación entre la solubilidad (g/L) y el K<sub>ps</sub> siempre pasa por conocer la <b>solubilidad molar</b> (mol/L). Camino (a): <b>solubilidad → solubilidad molar → concentraciones de cationes y aniones → K<sub>ps</sub></b>. Camino (b), al revés: <b>K<sub>ps</sub> → concentraciones → solubilidad molar → solubilidad</b>. El producto de solubilidad es una constante de equilibrio que da una idea de la concentración de los iones en disolución.` },
+
+    { part:PART, title:'Clasificación de las sales',
+      hl:()=>[card('kpsMath')],
+      setup(){ kpsSet('PbCl2',-1,'none'); },
+      body:`A 25 °C, si una sal tiene solubilidad <b>mayor que 0,02 M es soluble</b>, si es <b>aproximadamente 0,02 M es ligeramente soluble</b> y si es <b>menor que 0,02 M es poco soluble</b>. Este último tipo es el que interesa en el tema. Acá el PbCl₂ aparece como ligeramente soluble en la fila <b>Clasificación</b>; probá con el AgCl, que es poco soluble.` },
+
+    { part:PART, title:'Relación entre Kps y solubilidad',
+      hl:()=>[card('kpsEq'), card('kpsMath')],
+      setup(){ kpsSet('AgCl',-3,'none'); },
+      body:`Para una sal poco soluble <b>AₙBₘ ⇌ n Aᵐ⁺ + m Bⁿ⁻</b>, si la solubilidad es S, entonces [Aᵐ⁺] = n·S y [Bⁿ⁻] = m·S, y <b>K<sub>ps</sub> = (n·S)ⁿ · (m·S)ᵐ</b>. Para el modelo <b>AB</b>: K<sub>ps</sub> = S·S = S². Con el AgCl: S = √K<sub>ps</sub>. La primera fila de Cálculo arma esta expresión para cada sal.` },
+
+    { part:PART, title:'Modelo AB₂: Mg(OH)₂',
+      hl:()=>[grp('kpsSalt'), card('kpsMath')],
+      setup(){ kpsSet('MgOH2',-2,'none'); },
+      body:`Para el modelo <b>AB₂</b>: K<sub>ps</sub> = S·(2S)² = <b>4S³</b>. El Mg(OH)₂ es un ejemplo: <b>Mg(OH)₂ ⇌ Mg²⁺ + 2 OH⁻</b>. Fijate cómo el coeficiente 2 pasa a exponente en la expresión de K<sub>ps</sub> y también multiplica la concentración. Como tiene OH⁻, la tarjeta Cálculo muestra además el <b>pH</b> de la solución saturada.` },
+
+    { part:PART, title:'Modelo AB₃: Al(OH)₃',
+      hl:()=>[card('kpsMath')],
+      setup(){ kpsSet('AlOH3',-3,'none'); },
+      body:`Para el modelo <b>AB₃</b>: K<sub>ps</sub> = S·(3S)³ = <b>27S⁴</b>. El Al(OH)₃ de la pantalla es de este tipo. Despejando S obtenés la solubilidad molar.` },
+
+    { part:PART, title:'Qps frente a Kps: insaturada',
+      hl:()=>[grp('kpsT'), card('kpsMark')],
+      setup(){ kpsSet('AgCl',-7,'none'); },
+      body:`Podemos saber si una disolución está saturada conociendo el <b>cociente de reacción Q<sub>ps</sub></b> frente al K<sub>ps</sub>. Bajamos “Sal agregada” a 1×10⁻⁷ M: <b>Q<sub>ps</sub> &lt; K<sub>ps</sub></b> → disolución <b>no saturada</b> (sin precipitación). El marcador del medidor queda a la izquierda de la raya.` },
+
+    { part:PART, title:'Qps frente a Kps: saturada',
+      hl:()=>[grp('kpsT'), card('kpsMark')],
+      setup(){ kpsSet('AgCl',-4.9,'none'); },
+      body:`Con “Sal agregada” ≈ 1,3×10⁻⁵ M (la solubilidad molar del AgCl) queda <b>Q<sub>ps</sub> = K<sub>ps</sub></b> → disolución <b>saturada</b> (sin precipitación). El marcador se ubica sobre la raya.` },
+
+    { part:PART, title:'Qps > Kps y efecto del ion común',
+      hl:()=>[grp('kpsCI'), SIM()],
+      setup(){
+        kpsSet('AgCl',-3,'none');
+        later(()=>kpsSet('AgCl',-3,'an',-1), 600);
+      },
+      body:`Agregamos <b>NaCl 0,1 M</b>. Se modifica la concentración de uno de los iones de la expresión de equilibrio: al instante <b>Q<sub>ps</sub> &gt; K<sub>ps</sub></b> (disolución sobresaturada) y existe precipitación hasta que las concentraciones iónicas igualen a K<sub>ps</sub>. Por el principio de <b>Le Châtelier</b> el proceso se desplaza hacia la izquierda: precipita una fracción mayor del compuesto insoluble. <b>El efecto del ion común hace que disminuya la solubilidad de la sal.</b> <i>Si te perdiste el momento, volvé un paso y avanzá de nuevo.</i>` },
+
+    { part:PART, title:'El pH en los hidróxidos: pH alto',
+      hl:()=>[grp('kpsCI'), SIM()],
+      setup(){ kpsSetPH('MgOH2',-2,12); },
+      body:`La solubilidad de muchas sustancias depende del pH. En hidróxidos parcialmente solubles, como el <b>Mg(OH)₂</b>, al añadir iones hidróxido (<b>aumento de pH</b>) el equilibrio se desplaza hacia la izquierda y <b>disminuye la solubilidad</b>: equivale al efecto del ion común. Acá, pH 12.` },
+
+    { part:PART, title:'El pH en los hidróxidos: pH ácido',
+      hl:()=>[grp('kpsCI'), SIM()],
+      setup(){ kpsSetPH('MgOH2',-2,9); },
+      body:`Si añadimos protones (<b>disminución de pH</b>), disminuye la concentración de hidróxido y el equilibrio se desplaza hacia la <b>derecha</b>, <b>aumentando la solubilidad</b>. Acá, pH 9. Probá la misma idea con otros hidróxidos de la lista, como el Al(OH)₃.` },
+
+    { part:PART, title:'El pH y los aniones que se hidrolizan: BaF₂',
+      hl:()=>[SIM(), card('kpsEq')],
+      setup(){ kpsSet('BaF2',-1,'none'); },
+      body:`El pH también influye en las sales que contienen un anión que puede sufrir <b>hidrólisis</b>, como el <b>BaF₂</b>: el F⁻ puede reaccionar con los protones del agua en un medio ácido para dar HF. Así se retiran aniones fluoruro de la disolución, el equilibrio de solubilidad tiene que desplazarse a la derecha y el BaF₂ se disuelve más. La solubilidad será aún mayor cuanto más ácido sea el medio, algo que no se ve planteando solo el equilibrio de disociación. <i>Este efecto está explicado en el apunte y no se calcula en el simulador.</i>` },
+
+    { part:PART, title:'Resumen y límites del modelo',
+      hl:()=>[card('kpsColorScale')],
+      setup(){ kpsSet('AgCl',-3,'none'); },
+      body:`<b>Resumen:</b> el K<sub>ps</sub> es la constante de equilibrio de disociación del sólido; Q<sub>ps</sub> frente a K<sub>ps</sub> indica si la disolución es insaturada, saturada o sobresaturada; el ion común y el pH disminuyen o aumentan la solubilidad. <b>Límites:</b> este tratamiento es algo simplista y supone un equilibrio independiente de otros posibles; la formación de pares iónicos y la hidrólisis de ciertos cationes metálicos muy polarizantes (pequeños y de carga elevada) pueden modificar las concentraciones que aparecen en la expresión del producto de solubilidad.` }
+  ];
+
+  let tourOn = false, tourI = 0;
+  function clearHl(){ document.querySelectorAll('.tour-hl').forEach(e=>e.classList.remove('tour-hl')); }
+  function showStep(i){
+    tourI = clamp(i,0,STEPS.length-1);
+    tourTimers.forEach(clearTimeout); tourTimers = [];
+    const s = STEPS[tourI];
+    clearHl();
+    s.setup();
+    $('tourCount').textContent = `Paso ${tourI+1} de ${STEPS.length}`;
+    $('tourPart').textContent = s.part;
+    $('tourTitle').innerHTML = s.title.replace(/Qps/g,'Q<sub>ps</sub>').replace(/Kps/g,'K<sub>ps</sub>');
+    $('tourBody').innerHTML = s.body;
+    $('tourFill').style.width = ((tourI+1)/STEPS.length*100)+'%';
+    $('tourPrev').disabled = tourI===0;
+    $('tourNext').textContent = tourI===STEPS.length-1 ? 'Terminar ✓' : 'Siguiente →';
+    setTimeout(()=>{
+      if(!tourOn) return;
+      const els = s.hl().filter(Boolean);
+      els.forEach(e=>e.classList.add('tour-hl'));
+      if(els[0]) els[0].scrollIntoView({behavior:'smooth', block:'center'});
+    }, 60);
+  }
+  function startTour(){
+    tourOn = true; document.body.classList.add('touring');
+    $('tourDock').classList.remove('hide');
+    showStep(0);
+  }
+  function endTour(){
+    if(!tourOn) return;
+    tourOn = false; document.body.classList.remove('touring');
+    $('tourDock').classList.add('hide'); clearHl();
+    tourTimers.forEach(clearTimeout); tourTimers = [];
+    kpsSet('AgCl',-3,'none');
+  }
+  $('tourNext').addEventListener('click', ()=>{ if(tourI>=STEPS.length-1) endTour(); else showStep(tourI+1); });
+  $('tourPrev').addEventListener('click', ()=> showStep(tourI-1));
+  $('tourSkip').addEventListener('click', endTour);
+  document.addEventListener('keydown', e=>{
+    if(!tourOn) return;
+    if(e.key==='ArrowRight') $('tourNext').click();
+    else if(e.key==='ArrowLeft') $('tourPrev').click();
+    else if(e.key==='Escape') endTour();
+  });
+  $('eqIntroOverlay').addEventListener('click', e=>{
+    const b = e.target.closest('[data-eqintro]'); if(!b) return;
+    $('eqIntroOverlay').classList.add('hidden');
+    if(b.dataset.eqintro==='tour') startTour();
+  });
+  $('eqHelp').addEventListener('click', ()=>{ if(!tourOn) startTour(); else showStep(0); });
+})();
+</script>
+</body>
+</html>
